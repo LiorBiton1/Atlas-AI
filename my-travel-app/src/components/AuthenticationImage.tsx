@@ -14,27 +14,45 @@ export function AuthenticationImage() {
   // Form object
   const form = useForm({
     initialValues: {
-      email: '',
-      password: '',
+      email: "",
+      username: "",
+      usernameOrEmail: "",
+      password: "",
+      name: "",
       rememberMe: false,
     },
     validate: {
-      email: (value) => /^\S+@\S+\.\S+$/.test(value) ? null : 'Invalid email',
-      password: (value) => value.length >= 6 ? null : 'Password must be at least 6 characters long',
+      email: (value) => !isLogin && value.trim().length > 0 && !/^\S+@\S+\.\S+$/.test(value) ? "Invalid email" : null,
+      username: (value) => !isLogin && value.trim().length < 3 ? "Username must be at least 3 characters" : null,
+      usernameOrEmail: (value) => isLogin && value.trim().length < 1 ? "Username or email is required" : null,
+      password: (value) => value.length >= 6 ? null : "Password must be at least 6 characters long",
+      name: (value) => !isLogin && value.trim().length < 1 ? "Name is required" : null,
     },
   });
 
   const handleSubmit = async (values: typeof form.values) => {
     // Sign in
     if (isLogin) {
-      await signIn("credentials", { redirect: false, email: values.email, password: values.password });
+      // Determine if the user is using username or email
+      const isEmail = /^\S+@\S+\.\S+$/.test(values.usernameOrEmail);
+      await signIn("credentials", { 
+        redirect: false, 
+        username: isEmail ? undefined : values.usernameOrEmail,
+        email: isEmail ? values.usernameOrEmail : undefined,
+        password: values.password 
+      });
     }
     else {
       // Register
       await fetch("/api/auth/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(values),
+        body: JSON.stringify({
+          username: values.username,
+          email: values.email,
+          password: values.password,
+          name: values.name,
+        }),
       });
     }
   };
@@ -52,13 +70,48 @@ export function AuthenticationImage() {
             <GoogleButton radius="xl">{isLogin ? 'Sign in with Google' : 'Sign up with Google'}</GoogleButton>
           </Group>
 
-          <TextInput
-            label="Email Adress"
-            placeholder="example@gmail.com"
-            size="md"
-            radius="md"
-            {...form.getInputProps("email")}
-          />
+          {isLogin ? (
+            // Login form - single field for username or email
+            <TextInput
+              label="Username or Email"
+              placeholder="jsmith or john@example.com"
+              size="md"
+              radius="md"
+              {...form.getInputProps("usernameOrEmail")}
+            />
+          ) : (
+            // Registration form - separate fields
+            <>
+              {/* Name field */}
+              <TextInput
+                label="Full Name"
+                placeholder="John Smith"
+                size="md"
+                radius="md"
+                {...form.getInputProps("name")}
+              />
+
+              {/* Username and Email fields */}
+              <TextInput
+                label="Username"
+                placeholder="jsmith"
+                size="md"
+                radius="md"
+                mt="md"
+                {...form.getInputProps("username")}
+              />
+
+              <TextInput
+                label="Email Address"
+                placeholder="example@gmail.com"
+                size="md"
+                radius="md"
+                mt="md"
+                {...form.getInputProps("email")}
+              />
+
+            </>
+          )}
 
           <PasswordInput
             label="Password"

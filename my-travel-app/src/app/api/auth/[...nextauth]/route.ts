@@ -39,6 +39,10 @@ const handler = NextAuth({
             }
         })
     ],
+    pages: {
+        signIn: "/auth", // Redirect sign-in errors to auth page
+        error: "/auth", // Redirect all errors to auth page
+    },
     callbacks: {
         async signIn({ user, account, profile }) {
             if(account?.provider === "google") {
@@ -64,6 +68,7 @@ const handler = NextAuth({
                         username,
                         email: user.email,
                         name: user.name,
+                        googleId: account.providerAccountId,
                         // No password for Google users
                     });
                 }

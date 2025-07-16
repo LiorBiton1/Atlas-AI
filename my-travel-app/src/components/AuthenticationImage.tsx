@@ -1,15 +1,23 @@
-import { Anchor, Button, Checkbox, em, Group, Paper, PasswordInput, rem, Text, TextInput, Title } from '@mantine/core';
+import { Anchor, Button, Checkbox, em, Group, Paper, PasswordInput, Text, TextInput, Title, Alert, Notification } from '@mantine/core';
 import React, { useState } from 'react';
+import { useRouter } from 'next/router';
 import { signIn } from 'next-auth/react';
 import { GoogleButton } from './GoogleButton';
 import { useForm } from '@mantine/form';
+import { IconCheck, IconAlertCircle } from '@tabler/icons-react';
 
 import classes from './AuthenticationImage.module.css';
 
-
 export function AuthenticationImage() {
+  const router = useRouter();
+  
   // Login and Register states
   const [isLogin, setIsLogin] = useState(true);
+
+  // Loading and Error states
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
 
   // Form object
   const form = useForm({
@@ -44,16 +52,49 @@ export function AuthenticationImage() {
     }
     else {
       // Register
-      await fetch("/api/auth/register", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          username: values.username,
-          email: values.email,
-          password: values.password,
-          name: values.name,
-        }),
-      });
+      setLoading(true);
+      setError("");
+      setSuccess("");
+
+      try {
+        const response = await fetch("/api/auth/register", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            username: values.username,
+            email: values.email,
+            password: values.password,
+            name: values.name,
+          }),
+        });
+
+        const data = await response.json();
+
+        if(response.ok) {
+          setSuccess("Account created successfully! Please sign in.");
+          setError("");
+          form.reset();
+          setTimeout(() => setIsLogin(true), 2000); // Auto-switch to login after 2 seconds
+          setIsLogin(true);
+        }
+        else {
+          if(data.field) {
+            // Username taken, email exists errors
+            form.setFieldError(data.field, data.error);
+          }
+          else {
+            // General error
+            setError(data.error || "Registration failed");
+          }
+        }
+      } 
+      catch (error) {
+        console.error("Registration error:", error);
+        setError("Registration failed");
+      } 
+      finally {
+        setLoading(false);
+      }
     }
   };
 
@@ -65,9 +106,80 @@ export function AuthenticationImage() {
             {isLogin ? 'Welcome back!' : 'Create an account'}
           </Title>
 
+          {/* Success Message */}
+          {success && (
+            <Alert 
+              icon={<IconCheck size="1rem" />} 
+              title="Success!" 
+              color="green" 
+              mb="md"
+              onClose={() => setSuccess('')}
+              withCloseButton
+            >
+              {success}
+            </Alert>
+          )}
+
+          {/* Error Message */}
+          {error && (
+            <Alert 
+              icon={<IconAlertCircle size="1rem" />} 
+              title="Error!" 
+              color="red" 
+              mb="md"
+              onClose={() => setError('')}
+              withCloseButton
+            >
+              {error}
+            </Alert>
+          )}
+
           {/* Google Sign In Button */}
+
           <Group grow mb="md" mt="md">
-            <GoogleButton radius="xl">{isLogin ? 'Sign in with Google' : 'Sign up with Google'}</GoogleButton>
+            <GoogleButton radius="xl" 
+              onClick={async () => {
+                try {
+                  setError("");
+
+                  const result = await signIn("google", { 
+                    redirect: false,
+                    callbackUrl: "/" // Change this to wherever I want to go to after I login via google
+                  });
+
+                  if(result?.error) {
+                    // Handle error from Google sign-in
+                    switch(result.error) {
+                      case "OAuthCallback":
+                        setError("Google sign-in was cancelled or failed. Please try again.");
+                        break;
+                      case "OAuthAccountNotLinked":
+                        setError("This email is already registered with a different sign-in method.");
+                        break;
+                      case "AccessDenied":
+                        setError("Access denied. Please grant permission to continue.");
+                        break;
+                      case "Verification":
+                        setError("Unable to verify your Google account. Please try again.");
+                        break;
+                      default:
+                        setError("Google sign-in failed. Please try again or use email registration.");
+                    }
+                  }
+                  else if(result?.ok) {
+                    // Successful sign-in
+                    console.log('Google sign-in successful');
+                    // router.push("/"); redirect to home page or desired page
+                  }
+                }
+                catch (error) {
+                  console.error("Google sign-in error:", error);
+                  setError("Unable to connect to Google. Please check your connection and try again.");
+                }
+              }}
+            >
+              {isLogin ? 'Sign in with Google' : 'Sign up with Google'}
+            </GoogleButton>
           </Group>
 
           {isLogin ? (
@@ -131,8 +243,8 @@ export function AuthenticationImage() {
             />
           )}
 
-          <Button fullWidth mt="xl" size="md" radius="md" type="submit">
-            {isLogin ? 'Sign in' : 'Register'}
+          <Button fullWidth mt="xl" size="md" radius="md" type="submit" loading={loading} disabled={loading}>
+            {loading ? "Creating account..." : (isLogin ? 'Sign in' : 'Register')}
           </Button>
 
           <Text ta="center" mt="md">

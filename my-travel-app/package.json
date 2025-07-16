@@ -22,6 +22,7 @@
     "@mantine/nprogress": "^8.1.3",
     "@mantine/spotlight": "^8.1.3",
     "@mantine/tiptap": "^8.1.3",
+    "@tabler/icons-react": "^3.34.0",
     "@tiptap/extension-link": "^3.0.6",
     "@tiptap/pm": "^3.0.6",
     "@tiptap/react": "^3.0.6",
@@ -36,7 +37,8 @@
     "next-auth": "^4.24.11",
     "react": "19.1.0",
     "react-dom": "19.1.0",
-    "recharts": "^2.15.4"
+    "recharts": "^2.15.4",
+    "secret": "^1.2.0"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",

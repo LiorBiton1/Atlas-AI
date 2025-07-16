@@ -1,6 +1,6 @@
 import { Anchor, Button, Checkbox, em, Group, Paper, PasswordInput, Text, TextInput, Title, Alert, Notification } from '@mantine/core';
 import React, { useState } from 'react';
-import { useRouter } from 'next/router';
+import { useRouter } from 'next/navigation';
 import { signIn } from 'next-auth/react';
 import { GoogleButton } from './GoogleButton';
 import { useForm } from '@mantine/form';
@@ -10,7 +10,7 @@ import classes from './AuthenticationImage.module.css';
 
 export function AuthenticationImage() {
   const router = useRouter();
-  
+
   // Login and Register states
   const [isLogin, setIsLogin] = useState(true);
 
@@ -169,7 +169,7 @@ export function AuthenticationImage() {
                   else if(result?.ok) {
                     // Successful sign-in
                     console.log('Google sign-in successful');
-                    // router.push("/"); redirect to home page or desired page
+                    router.push("/"); // redirect to home page or desired page
                   }
                 }
                 catch (error) {

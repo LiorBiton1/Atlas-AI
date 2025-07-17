@@ -1,6 +1,6 @@
 import { Anchor, Button, Checkbox, em, Group, Paper, PasswordInput, Text, TextInput, Title, Alert, Notification } from '@mantine/core';
-import React, { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import React, { useEffect, useState } from 'react';
+import { useRouter, usePathname, useSearchParams } from 'next/navigation';
 import { signIn } from 'next-auth/react';
 import { GoogleButton } from './GoogleButton';
 import { useForm } from '@mantine/form';
@@ -10,6 +10,15 @@ import classes from './AuthenticationImage.module.css';
 
 export function AuthenticationImage() {
   const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+
+  useEffect(() => {
+    // If there are errors or callback params, clean the URL
+    if(pathname === "/auth" && (searchParams.has("error") || searchParams.has("callbackUrl"))) {
+      router.replace("/auth");
+    }
+  }, [pathname, searchParams, router]);
 
   // Login and Register states
   const [isLogin, setIsLogin] = useState(true);
@@ -41,14 +50,35 @@ export function AuthenticationImage() {
   const handleSubmit = async (values: typeof form.values) => {
     // Sign in
     if (isLogin) {
-      // Determine if the user is using username or email
-      const isEmail = /^\S+@\S+\.\S+$/.test(values.usernameOrEmail);
-      await signIn("credentials", { 
-        redirect: false, 
-        username: isEmail ? undefined : values.usernameOrEmail,
-        email: isEmail ? values.usernameOrEmail : undefined,
-        password: values.password 
-      });
+      setLoading(true);
+      setError("");
+
+      try {
+        // Determine if the user is using username or email
+        const isEmail = /^\S+@\S+\.\S+$/.test(values.usernameOrEmail);
+
+        const result = await signIn("credentials", { 
+          redirect: false, 
+          username: isEmail ? undefined : values.usernameOrEmail,
+          email: isEmail ? values.usernameOrEmail : undefined,
+          password: values.password 
+        });
+
+        if(result?.error) {
+          setError("Invalid username/email or password. Please try again.");
+        }
+        else if(result?.ok) {
+          // Successful sign-in
+          router.push("/"); // redirect to home page or desired page
+        }
+      }
+      catch(error) {
+        console.error("Sign-in error:", error);
+        setError("Sign-in failed. Please try again.");
+      }
+      finally {
+        setLoading(false);
+      }
     }
     else {
       // Register
@@ -239,12 +269,15 @@ export function AuthenticationImage() {
               label="Keep me logged in"
               mt="xl"
               size="md"
-              {...form.getInputProps("rememberMe", { type: 'checkbox' })}
+              {...form.getInputProps("rememberMe", { type: "checkbox" })}
             />
           )}
 
           <Button fullWidth mt="xl" size="md" radius="md" type="submit" loading={loading} disabled={loading}>
-            {loading ? "Creating account..." : (isLogin ? 'Sign in' : 'Register')}
+            {loading ? 
+              (isLogin ? "Signing in..." : "Creating account...") : 
+              (isLogin ? "Sign in" : "Register")
+            }
           </Button>
 
           <Text ta="center" mt="md">

@@ -84,7 +84,7 @@ const handler = NextAuth({
 
                     if(!existingUser) {
                         // Create a username from email
-                        let baseUsername = user.email?.split("@")[0] || 'user';
+                        const baseUsername = user.email?.split("@")[0] || 'user';
                         let username = baseUsername;
                         let counter = 1;
 

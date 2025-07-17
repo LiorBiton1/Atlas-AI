@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { connectDB } from "@/lib/mongodb";
+import { MongoServerError } from "mongodb";
 import User from "@/models/User";
 import bcrypt from "bcryptjs";
 
@@ -78,11 +79,11 @@ export async function POST(request: NextRequest) {
             user: { id: user._id.toString(), username: user.username, email: user.email, name: user.name }
         }, { status: 201 });
     }
-    catch(error: any) {
+    catch(error: unknown) {
         console.error("Registration error:", error);
 
         // If two people create same user at the same time
-        if(error.code === 11000) {
+        if(error instanceof MongoServerError && error.code === 11000) {
             const field = Object.keys(error.keyPattern)[0];
             return NextResponse.json({
                 error: `User with this ${field} already exists`,

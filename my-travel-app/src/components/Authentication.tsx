@@ -6,9 +6,9 @@ import { GoogleButton } from './GoogleButton';
 import { useForm } from '@mantine/form';
 import { IconCheck, IconAlertCircle } from '@tabler/icons-react';
 
-import classes from './AuthenticationImage.module.css';
+import classes from './Authentication.module.css';
 
-export function AuthenticationImage() {
+export function Authentication() {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();

@@ -1,8 +1,8 @@
 "use client";
-import { AuthenticationImage } from "@/components/AuthenticationImage";
+import { Authentication } from "@/components/Authentication";
 
 export default function LoginPage() {
   return (
-    <AuthenticationImage />
+    <Authentication />
   );
 }

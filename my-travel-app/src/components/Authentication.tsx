@@ -45,6 +45,13 @@ export function Authentication() {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
 
+  // Forgot Password state
+  const [showForgot, setShowForgot] = useState(false);
+  const [forgotEmail, setForgotEmail] = useState("");
+  const [forgotLoading, setForgotLoading] = useState(false);
+  const [forgotError, setForgotError] = useState("");
+  const [forgotSuccess, setForgotSuccess] = useState("");
+
   // Form object
   const form = useForm({
     initialValues: {
@@ -80,26 +87,26 @@ export function Authentication() {
         // Determine if the user is using username or email
         const isEmail = /^\S+@\S+\.\S+$/.test(values.usernameOrEmail);
 
-        const result = await signIn("credentials", { 
-          redirect: false, 
+        const result = await signIn("credentials", {
+          redirect: false,
           username: isEmail ? undefined : values.usernameOrEmail,
           email: isEmail ? values.usernameOrEmail : undefined,
-          password: values.password 
+          password: values.password
         });
 
-        if(result?.error) {
+        if (result?.error) {
           setError("Invalid username/email or password. Please try again.");
         }
-        else if(result?.ok) {
+        else if (result?.ok) {
           // Successful sign-in
           setSuccess("Signed in successfully!");
-          setTimeout(() => { 
+          setTimeout(() => {
             router.push("/"); // redirect after 1.5 seconds
             setSuccess("");   // clear success message
           }, 1000);
         }
       }
-      catch(error) {
+      catch (error) {
         console.error("Sign-in error:", error);
         setError("Sign-in failed. Please try again.");
       }
@@ -127,7 +134,7 @@ export function Authentication() {
 
         const data = await response.json();
 
-        if(response.ok) {
+        if (response.ok) {
           setSuccess("Account created successfully! Please sign in.");
           setError("");
           form.reset();
@@ -135,7 +142,7 @@ export function Authentication() {
           setIsLogin(true);
         }
         else {
-          if(data.field) {
+          if (data.field) {
             // Username taken, email exists errors
             form.setFieldError(data.field, data.error);
           }
@@ -144,11 +151,11 @@ export function Authentication() {
             setError(data.error || "Registration failed");
           }
         }
-      } 
+      }
       catch (error) {
         console.error("Registration error:", error);
         setError("Registration failed");
-      } 
+      }
       finally {
         setLoading(false);
       }
@@ -159,16 +166,18 @@ export function Authentication() {
     <div className={classes.wrapper}>
       <Paper className={classes.form}>
         <form onSubmit={form.onSubmit(handleSubmit)}>
-          <Title order={2} className={classes.title}>
-            {isLogin ? 'Welcome back!' : 'Create an account'}
-          </Title>
+          {!showForgot && (
+            <Title order={2} className={classes.title}>
+              {isLogin ? 'Welcome back!' : 'Create an account'}
+            </Title>
+          )}
 
           {/* Success Message */}
           {success && (
-            <Alert 
-              icon={<IconCheck size="1rem" />} 
-              title="Success!" 
-              color="green" 
+            <Alert
+              icon={<IconCheck size="1rem" />}
+              title="Success!"
+              color="green"
               mb="md"
               onClose={() => setSuccess('')}
               withCloseButton
@@ -179,10 +188,10 @@ export function Authentication() {
 
           {/* Error Message */}
           {error && (
-            <Alert 
-              icon={<IconAlertCircle size="1rem" />} 
-              title="Error!" 
-              color="red" 
+            <Alert
+              icon={<IconAlertCircle size="1rem" />}
+              title="Error!"
+              color="red"
               mb="md"
               onClose={() => setError('')}
               withCloseButton
@@ -191,125 +200,184 @@ export function Authentication() {
             </Alert>
           )}
 
-          {/* Google Sign In Button */}
-
-          <Group grow mb="md" mt="md">
-            <GoogleButton radius="xl" 
-              onClick={async () => {
-                try {
-                  setError("");
-
-                  const result = await signIn("google", { 
-                    redirect: false,
-                    callbackUrl: "/" // Change this to wherever I want to go to after I login via google
-                  });
-
-                  if(result?.error) {
-                    // Handle error from Google sign-in
-                    setError(mapGoogleError(result.error));
-                  }
-                  else if(result?.ok) {
-                    // Successful sign-in
-                    console.log('Google sign-in successful');
-                    router.push("/"); // redirect to home page or desired page
-                  }
-                }
-                catch (error) {
-                  console.error("Google sign-in error:", error);
-                  setError("Unable to connect to Google. Please check your connection and try again.");
-                }
-              }}
-            >
-              {isLogin ? 'Sign in with Google' : 'Sign up with Google'}
-            </GoogleButton>
-          </Group>
-
-          {isLogin ? (
-            // Login form - single field for username or email
-            <TextInput
-              label="Username or Email"
-              placeholder="jsmith or john@example.com"
-              size="md"
-              radius="md"
-              {...form.getInputProps("usernameOrEmail")}
-            />
-          ) : (
-            // Registration form - separate fields
-            <>
-              {/* Name field */}
-              <TextInput
-                label="Full Name"
-                placeholder="John Smith"
-                size="md"
-                radius="md"
-                {...form.getInputProps("name")}
-              />
-
-              {/* Username and Email fields */}
-              <TextInput
-                label="Username"
-                placeholder="jsmith"
-                size="md"
-                radius="md"
-                mt="md"
-                {...form.getInputProps("username")}
-              />
-
+          {/* Forgot Password Form */}
+          {showForgot ? (
+            <Paper className={classes.form} mt="md" p="md">
+              <Title order={3} mb="md">Reset your password</Title>
+              <Text mb="md">
+                Enter your email address below, and we will send you a link to reset your password.
+              </Text>
               <TextInput
                 label="Email Address"
-                placeholder="example@gmail.com"
+                placeholder="Enter your email"
                 size="md"
                 radius="md"
-                mt="md"
-                {...form.getInputProps("email")}
+                value={forgotEmail}
+                onChange={(e) => setForgotEmail(e.target.value)}
               />
 
+              <Button
+                fullWidth
+                mt="md"
+                size="md"
+                radius="md"
+                //onClick={handleForgotPassword}
+                disabled={forgotLoading}
+                loading={forgotLoading}
+              >
+                Reset Password
+              </Button>
+
+              <Text ta="center" mt="md">
+                <Anchor fw={500} onClick={() => setShowForgot(false)}>
+                  Back to login
+                </Anchor>
+              </Text>
+
+              {/* Error and Success Messages for Forgot Password */}
+              {forgotError && (
+                <Alert color="red" mt="md" onClose={() => setForgotError("")} withCloseButton>
+                  {forgotError}
+                </Alert>
+              )}
+
+              {forgotSuccess && (
+                <Alert color="green" mt="md" onClose={() => setForgotSuccess("")} withCloseButton>
+                  {forgotSuccess}
+                </Alert>
+              )}
+            </Paper>
+          ) : (
+            <>
+              {/* Google Sign In Button */}
+
+              <Group grow mb="md" mt="md">
+                <GoogleButton radius="xl"
+                  onClick={async () => {
+                    try {
+                      setError("");
+
+                      const result = await signIn("google", {
+                        redirect: false,
+                        callbackUrl: "/" // Change this to wherever I want to go to after I login via google
+                      });
+
+                      if (result?.error) {
+                        // Handle error from Google sign-in
+                        setError(mapGoogleError(result.error));
+                      }
+                      else if (result?.ok) {
+                        // Successful sign-in
+                        console.log('Google sign-in successful');
+                        router.push("/"); // redirect to home page or desired page
+                      }
+                    }
+                    catch (error) {
+                      console.error("Google sign-in error:", error);
+                      setError("Unable to connect to Google. Please check your connection and try again.");
+                    }
+                  }}
+                >
+                  {isLogin ? 'Sign in with Google' : 'Sign up with Google'}
+                </GoogleButton>
+              </Group>
+
+              {isLogin ? (
+                // Login form - single field for username or email
+                <TextInput
+                  label="Username or Email"
+                  placeholder="jsmith or john@example.com"
+                  size="md"
+                  radius="md"
+                  {...form.getInputProps("usernameOrEmail")}
+                />
+              ) : (
+                // Registration form - separate fields
+                <>
+                  {/* Name field */}
+                  <TextInput
+                    label="Full Name"
+                    placeholder="John Smith"
+                    size="md"
+                    radius="md"
+                    {...form.getInputProps("name")}
+                  />
+
+                  {/* Username and Email fields */}
+                  <TextInput
+                    label="Username"
+                    placeholder="jsmith"
+                    size="md"
+                    radius="md"
+                    mt="md"
+                    {...form.getInputProps("username")}
+                  />
+
+                  <TextInput
+                    label="Email Address"
+                    placeholder="example@gmail.com"
+                    size="md"
+                    radius="md"
+                    mt="md"
+                    {...form.getInputProps("email")}
+                  />
+
+                </>
+              )}
+
+              <PasswordInput
+                label="Password"
+                placeholder="Your password"
+                mt="md"
+                size="md"
+                radius="md"
+                {...form.getInputProps("password")}
+                visibilityToggleButtonProps={{ "aria-label": "toggle password visibility" }}
+              />
+
+              {isLogin && (
+                <Text ta="right" mt="xs" mb="md">
+                  <Anchor fw={500} onClick={() => setShowForgot(true)}>
+                    Forgot password?
+                  </Anchor>
+                </Text>
+              )}
+
+              {isLogin && (
+                <Checkbox
+                  label="Keep me logged in"
+                  mt="xl"
+                  size="md"
+                  {...form.getInputProps("rememberMe", { type: "checkbox" })}
+                />
+              )}
+
+              <Button fullWidth mt="xl" size="md" radius="md" type="submit" loading={loading} disabled={loading}>
+                {loading ?
+                  (isLogin ? "Signing in..." : "Creating account...") :
+                  (isLogin ? "Sign in" : "Register")
+                }
+              </Button>
+
+              <Text ta="center" mt="md">
+                {isLogin ? (
+                  <>
+                    Don&apos;t have an account?{' '}
+                    <Anchor fw={500} onClick={() => { setIsLogin(false); form.reset(); setError(''); setSuccess(''); }}>
+                      Register
+                    </Anchor>
+                  </>
+                ) : (
+                  <>
+                    Already have an account?{' '}
+                    <Anchor fw={500} onClick={() => { setIsLogin(true); form.reset(); setError(''); setSuccess(''); }}>
+                      Login
+                    </Anchor>
+                  </>
+                )}
+              </Text>
             </>
           )}
-
-          <PasswordInput
-            label="Password"
-            placeholder="Your password"
-            mt="md"
-            size="md"
-            radius="md"
-            {...form.getInputProps("password")}
-            visibilityToggleButtonProps={{ "aria-label": "toggle password visibility" }}
-          />
-
-          {isLogin && (
-            <Checkbox
-              label="Keep me logged in"
-              mt="xl"
-              size="md"
-              {...form.getInputProps("rememberMe", { type: "checkbox" })}
-            />
-          )}
-
-          <Button fullWidth mt="xl" size="md" radius="md" type="submit" loading={loading} disabled={loading}>
-            {loading ? 
-              (isLogin ? "Signing in..." : "Creating account...") : 
-              (isLogin ? "Sign in" : "Register")
-            }
-          </Button>
-
-          <Text ta="center" mt="md">
-            {isLogin ? (
-              <>
-                Don&apos;t have an account?{' '}
-                <Anchor fw={500} onClick={() => { setIsLogin(false); form.reset(); setError(''); setSuccess(''); }}>
-                  Register
-                </Anchor>
-              </>
-            ) : (
-              <>
-                Already have an account?{' '}
-                <Anchor fw={500} onClick={() => { setIsLogin(true); form.reset(); setError(''); setSuccess(''); }}>
-                  Login
-                </Anchor>
-              </>
-            )}
-          </Text>
         </form>
       </Paper>
     </div>

@@ -8,14 +8,31 @@ import { IconCheck, IconAlertCircle } from '@tabler/icons-react';
 
 import classes from './Authentication.module.css';
 
+// Function to map Google sign-in errors to user-friendly messages
+function mapGoogleError(code: string) {
+  switch (code) {
+    case "OAuthCallback":
+      return "Google sign‑in was cancelled or failed. Please try again.";
+    case "OAuthAccountNotLinked":
+      return "This email is already registered with a different sign‑in method.";
+    case "AccessDenied":
+      return "Access denied. Please grant permission to continue.";
+    case "Verification":
+      return "Unable to verify your Google account. Please try again.";
+    default:
+      return "Google sign‑in failed. Please try again or use email registration.";
+  }
+}
+
 export function Authentication() {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
 
   useEffect(() => {
-    // If there are errors or callback params, clean the URL
-    if(pathname === "/auth" && (searchParams.has("error") || searchParams.has("callbackUrl"))) {
+    const error = searchParams.get("error");
+    if (pathname === "/auth" && error) {
+      setError(mapGoogleError(error));
       router.replace("/auth");
     }
   }, [pathname, searchParams, router]);
@@ -69,7 +86,11 @@ export function Authentication() {
         }
         else if(result?.ok) {
           // Successful sign-in
-          router.push("/"); // redirect to home page or desired page
+          setSuccess("Signed in successfully!");
+          setTimeout(() => { 
+            router.push("/"); // redirect after 1.5 seconds
+            setSuccess("");   // clear success message
+          }, 1000);
         }
       }
       catch(error) {
@@ -179,22 +200,7 @@ export function Authentication() {
 
                   if(result?.error) {
                     // Handle error from Google sign-in
-                    switch(result.error) {
-                      case "OAuthCallback":
-                        setError("Google sign-in was cancelled or failed. Please try again.");
-                        break;
-                      case "OAuthAccountNotLinked":
-                        setError("This email is already registered with a different sign-in method.");
-                        break;
-                      case "AccessDenied":
-                        setError("Access denied. Please grant permission to continue.");
-                        break;
-                      case "Verification":
-                        setError("Unable to verify your Google account. Please try again.");
-                        break;
-                      default:
-                        setError("Google sign-in failed. Please try again or use email registration.");
-                    }
+                    setError(mapGoogleError(result.error));
                   }
                   else if(result?.ok) {
                     // Successful sign-in
@@ -262,6 +268,7 @@ export function Authentication() {
             size="md"
             radius="md"
             {...form.getInputProps("password")}
+            visibilityToggleButtonProps={{ "aria-label": "toggle password visibility" }}
           />
 
           {isLogin && (
@@ -284,14 +291,14 @@ export function Authentication() {
             {isLogin ? (
               <>
                 Don&apos;t have an account?{' '}
-                <Anchor fw={500} onClick={() => setIsLogin(false)}>
+                <Anchor fw={500} onClick={() => { setIsLogin(false); form.reset(); setError(''); setSuccess(''); }}>
                   Register
                 </Anchor>
               </>
             ) : (
               <>
                 Already have an account?{' '}
-                <Anchor fw={500} onClick={() => setIsLogin(true)}>
+                <Anchor fw={500} onClick={() => { setIsLogin(true); form.reset(); setError(''); setSuccess(''); }}>
                   Login
                 </Anchor>
               </>

@@ -56,7 +56,13 @@ export function Authentication() {
       rememberMe: false,
     },
     validate: {
-      email: (value) => !isLogin && value.trim().length > 0 && !/^\S+@\S+\.\S+$/.test(value) ? "Invalid email" : null,
+      email: (value) => {
+        if (!isLogin) {
+          if (value.trim().length === 0) return "Email is required";
+          if (!/^\S+@\S+\.\S+$/.test(value)) return "Invalid email";
+        }
+        return null;
+      },
       username: (value) => !isLogin && value.trim().length < 3 ? "Username must be at least 3 characters" : null,
       usernameOrEmail: (value) => isLogin && value.trim().length < 1 ? "Username or email is required" : null,
       password: (value) => value.length >= 6 ? null : "Password must be at least 6 characters long",

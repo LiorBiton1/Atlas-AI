@@ -73,6 +73,59 @@ describe("Register and Login button functionality", () => {
     // Assert sign-in UI is shown again
     expect(screen.getByRole("heading", { name: /welcome back!/i })).toBeInTheDocument();
   });
+
+  it("Clears form fields when switching forms", async () => {
+    // Fill in some fields in the sign-in form
+    await userEvent.type(screen.getByLabelText(/username or email/i), "testuser");
+    await userEvent.type(screen.getByLabelText(/^password$/i), "testpassword");
+
+    // Click the Register link to switch to registration form
+    await userEvent.click(screen.getByText(/register/i));
+
+    // Assert that the sign-in fields are cleared
+    expect(screen.getByLabelText(/full name/i)).toHaveValue("");
+    expect(screen.getByLabelText(/username/i)).toHaveValue("");
+    expect(screen.getByLabelText(/email address/i)).toHaveValue("");
+    expect(screen.getByLabelText(/^password$/i)).toHaveValue("");
+  });
+
+  it("Clears success messages when switching forms", async () => {
+    // Mock the signIn function to simulate a successful response
+    (signIn as jest.Mock).mockResolvedValueOnce({ ok: true });
+
+    // Fill in valid credentials and submit sign-in form
+    await userEvent.type(screen.getByLabelText(/username or email/i), "testuser");
+    await userEvent.type(screen.getByLabelText(/^password$/i), "validpassword");
+    await userEvent.click(screen.getByRole("button", { name: /^sign in$/i }));
+
+    // Assert success message is shown
+    expect(screen.getByText(/Signed in successfully!/i)).toBeInTheDocument();
+
+    // Click the Register link to switch to registration form
+    await userEvent.click(screen.getByText(/register/i));
+    
+    // Assert that the success message is cleared
+    expect(screen.queryByText(/Signed in successfully!/i)).not.toBeInTheDocument();
+  });
+
+  it("Clears error messages when switching forms", async () => {
+    // Mock the signIn function to simulate an error response
+    (signIn as jest.Mock).mockResolvedValueOnce({ error: "Invalid credentials", ok: false });
+
+    // Fill in invalid credentials and submit sign-in form
+    await userEvent.type(screen.getByLabelText(/username or email/i), "invaliduser");
+    await userEvent.type(screen.getByLabelText(/^password$/i), "wrongpassword");
+    await userEvent.click(screen.getByRole("button", { name: /^sign in$/i }));
+
+    // Assert error message is shown
+    expect(screen.getByText(/Invalid username\/email or password. Please try again./i)).toBeInTheDocument();
+
+    // Click the Register link to switch to registration form
+    await userEvent.click(screen.getByText(/register/i));
+
+    // Assert that the error message is cleared
+    expect(screen.queryByText(/Invalid username\/email or password. Please try again./i)).not.toBeInTheDocument();
+  });
 });
 
 describe("Authentication Register rendering", () => {

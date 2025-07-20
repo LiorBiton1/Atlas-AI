@@ -16,7 +16,7 @@ export async function POST(request: NextRequest) {
         }
 
         // Validate email format
-        const emailRegex = /^\S+@\S+\.\S+$/;
+        const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
         if(!emailRegex.test(email)) {
             return NextResponse.json({
                 error: "Invalid email format"
@@ -71,13 +71,14 @@ export async function POST(request: NextRequest) {
 async function sendPasswordResetEmail(email: string, token: string) {
     const transporter = nodemailer.createTransport({
         service: "Gmail", // To be added: Add more email providers if needed
+        secure: true, // Use SSL/TLS
         auth: {
             user: process.env.EMAIL_USER,
             pass: process.env.EMAIL_APP_PASSWORD // The apps password
         }
     });
 
-    const resetUrl = `${process.env.NEXTAUTH_URL || 'http://localhost:3000'}/auth?reset_token=${token}`;
+    const resetUrl = `${process.env.NEXTAUTH_URL || 'https://localhost:3000'}/auth?reset_token=${token}`;
 
     const mailOptions = {
         from: process.env.EMAIL_USER,

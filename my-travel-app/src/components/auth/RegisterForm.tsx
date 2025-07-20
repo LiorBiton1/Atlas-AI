@@ -34,7 +34,7 @@ export function RegisterForm({ onSuccess, onLogin, onNotify }: Readonly<Register
                 if (value.trim().length === 0) {
                     return "Email is required";
                 }
-                if (!/^\S+@\S+\.\S+$/.test(value)) {
+                if (!/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(value)) {
                     return "Invalid email format";
                 }
                 return null;

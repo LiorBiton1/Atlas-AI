@@ -39,7 +39,7 @@ export function LoginForm({ onSuccess, onRegister, onForgotPassword, onNotify }:
 
         try {
             // Determine if the user is using username or email
-            const isEmail = /^\S+@\S+\.\S+$/.test(values.usernameOrEmail);
+            const isEmail = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(values.usernameOrEmail);
 
             const result = await signIn("credentials", {
                 redirect: false,

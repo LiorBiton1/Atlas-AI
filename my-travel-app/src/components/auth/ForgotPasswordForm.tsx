@@ -21,7 +21,7 @@ export function ForgotPasswordForm({ onBack, onNotify }: Readonly<ForgotPassword
         }
 
         // Validate email format
-        const emailRegex = /^\S+@\S+\.\S+$/;
+        const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
         if (!emailRegex.test(forgotEmail)) {
             onNotify?.("error", "Invalid email format");
             return;

@@ -22,7 +22,7 @@ export async function POST(request: NextRequest) {
         }
 
         // Validate email format
-        const emailRegex = /^\S+@\S+\.\S+$/;
+        const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
         if (!emailRegex.test(email)) {
             return NextResponse.json({ 
                 error: "Invalid email format" 

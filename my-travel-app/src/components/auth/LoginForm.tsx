@@ -1,6 +1,6 @@
 import { Anchor, Button, Checkbox, Group, PasswordInput, Text, TextInput, Title } from "@mantine/core";
 import { useForm } from "@mantine/form";
-import { GoogleButton } from "../GoogleButton";
+import { GoogleButton } from "./GoogleButton";
 import { signIn } from "next-auth/react";
 import { mapGoogleError } from "../../utils/auth";
 import { useState } from "react";

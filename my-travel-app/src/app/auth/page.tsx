@@ -1,5 +1,5 @@
 "use client";
-import { Authentication } from "@/components/Authentication";
+import { Authentication } from "@/components/auth/Authentication";
 
 export default function LoginPage() {
   return (

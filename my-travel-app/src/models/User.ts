@@ -6,6 +6,8 @@ const UserSchema = new Schema({
     name: { type: String },
     email: { type: String, unique: true, required: true },
     googleId: { type: String, unique: true, sparse: true },
+    resetPasswordToken: { type: String },
+    resetPasswordExpires: { type: Date },
 });
 
 const User = models.User || model("User", UserSchema);

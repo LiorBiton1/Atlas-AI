@@ -28,31 +28,43 @@ export function Authentication() {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
-
-  useEffect(() => {
-    const error = searchParams.get("error");
-    if (pathname === "/auth" && error) {
-      setError(mapGoogleError(error));
-      router.replace("/auth");
-    }
-  }, [pathname, searchParams, router]);
+  const resetToken = searchParams.get("reset_token");
 
   // Login and Register states
   const [isLogin, setIsLogin] = useState(true);
 
-  // Loading and Error states
+  // Loading states
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
-  const [success, setSuccess] = useState("");
+  const [forgotPasswordLoading, setForgotPasswordLoading] = useState(false);
+  const [resetPasswordLoading, setResetPasswordLoading] = useState(false);
+  const [googleLoading, setGoogleLoading] = useState(false);
 
   // Forgot Password state
-  const [showForgot, setShowForgot] = useState(false);
+  const [showForgotPassword, setShowForgotPassword] = useState(false);
   const [forgotEmail, setForgotEmail] = useState("");
-  const [forgotLoading, setForgotLoading] = useState(false);
-  const [forgotError, setForgotError] = useState("");
-  const [forgotSuccess, setForgotSuccess] = useState("");
+  
+  // Reset Password state
+  const [showResetPassword, setShowResetPassword] = useState(false);
 
-  // Form object
+  // Notification state
+  const [notification, setNotification] = useState<{ type: "success" | "error"; message: string } | null>(null);
+
+
+  useEffect(() => {
+    const error = searchParams.get("error");
+    if (pathname === "/auth" && error) {
+      setNotification({ type: "error", message: mapGoogleError(error) });
+      router.replace("/auth");
+    }
+
+    // If the reset token is in the URL
+    if(resetToken) {
+      setShowResetPassword(true);
+      setShowForgotPassword(false);
+    }
+  }, [pathname, searchParams, router, resetToken]);
+
+  // Login and Register form
   const form = useForm({
     initialValues: {
       email: "",
@@ -77,136 +89,298 @@ export function Authentication() {
     },
   });
 
-  const handleSubmit = async (values: typeof form.values) => {
-    // Sign in
-    if (isLogin) {
-      setLoading(true);
-      setError("");
+  // Reset Password Form
+  const resetForm = useForm({
+    initialValues: {
+      password: "",
+      confirmPassword: "",
+    },
+    validate: {
+      password: (value) => value.length >= 6 ? null : "Password must be at least 6 characters long",
+      confirmPassword: (value, values) => value !== values.password ? "Passwords do not match" : null,
+    },
+  });
 
-      try {
-        // Determine if the user is using username or email
-        const isEmail = /^\S+@\S+\.\S+$/.test(values.usernameOrEmail);
+  // Login form submission handler
+  const handleLogin = async (values: typeof form.values) => {
+    setLoading(true);
+    setNotification(null);
 
-        const result = await signIn("credentials", {
-          redirect: false,
-          username: isEmail ? undefined : values.usernameOrEmail,
-          email: isEmail ? values.usernameOrEmail : undefined,
-          password: values.password
-        });
+    try {
+      // Determine if the user is using username or email
+      const isEmail = /^\S+@\S+\.\S+$/.test(values.usernameOrEmail);
 
-        if (result?.error) {
-          setError("Invalid username/email or password. Please try again.");
-        }
-        else if (result?.ok) {
-          // Successful sign-in
-          setSuccess("Signed in successfully!");
-          setTimeout(() => {
-            router.push("/"); // redirect after 1.5 seconds
-            setSuccess("");   // clear success message
-          }, 1000);
-        }
+      const result = await signIn("credentials", {
+        redirect: false,
+        username: isEmail ? undefined : values.usernameOrEmail,
+        email: isEmail ? values.usernameOrEmail : undefined,
+        password: values.password
+      });
+
+      if (result?.error) {
+        setNotification({ type: "error", message: "Invalid username/email or password. Please try again." });
       }
-      catch (error) {
-        console.error("Sign-in error:", error);
-        setError("Sign-in failed. Please try again.");
-      }
-      finally {
-        setLoading(false);
+      else if (result?.ok) {
+        // Successful sign-in
+        setNotification({ type: "success", message: "Signed in successfully!" });
+        setTimeout(() => {
+          router.push("/"); // redirect after 1.5 seconds
+          setNotification(null);   // clear success message
+        }, 1000);
       }
     }
-    else {
-      // Register
-      setLoading(true);
-      setError("");
-      setSuccess("");
-
-      try {
-        const response = await fetch("/api/auth/register", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            username: values.username,
-            email: values.email,
-            password: values.password,
-            name: values.name,
-          }),
-        });
-
-        const data = await response.json();
-
-        if (response.ok) {
-          setSuccess("Account created successfully! Please sign in.");
-          setError("");
-          form.reset();
-          setTimeout(() => setIsLogin(true), 2000); // Auto-switch to login after 2 seconds
-          setIsLogin(true);
-        }
-        else {
-          if (data.field) {
-            // Username taken, email exists errors
-            form.setFieldError(data.field, data.error);
-          }
-          else {
-            // General error
-            setError(data.error || "Registration failed");
-          }
-        }
-      }
-      catch (error) {
-        console.error("Registration error:", error);
-        setError("Registration failed");
-      }
-      finally {
-        setLoading(false);
-      }
+    catch (error) {
+      console.error("Sign-in error:", error);
+      setNotification({ type: "error", message: "Sign-in failed. Please try again." });
+    }
+    finally {
+      setLoading(false);
     }
   };
+
+  // Register form submission handler
+  const handleRegister = async (values: typeof form.values) => {
+    setLoading(true);
+    setNotification(null);
+
+    try {
+      const response = await fetch("/api/auth/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          username: values.username,
+          email: values.email,
+          password: values.password,
+          name: values.name,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        setNotification({ type: "success", message: "Account created successfully! Please sign in." });
+        form.reset();
+        setTimeout(() => setIsLogin(true), 2000); // Auto-switch to login after 2 seconds
+        setIsLogin(true);
+      }
+      else if(data.field) {
+        // Username taken, email exists errors
+        form.setFieldError(data.field, data.error);
+      }
+      else {
+        // General error
+        setNotification({ type: "error", message: data.error || "Registration failed" });
+      }
+    }
+    catch (error) {
+      console.error("Registration error:", error);
+      setNotification({ type: "error", message: "Registration failed" });
+    }
+    finally {
+      setLoading(false);
+    }
+  };
+
+  // Google Sign-In handler
+  const handleGoogleSignIn = async () => {
+    try {
+      setGoogleLoading(true);
+      setNotification(null);
+
+      const result = await signIn("google", {
+        redirect: false,
+        callbackUrl: "/" // Change this to wherever I want to go to after I login via google
+      });
+
+      if (result?.error) {
+        // Handle error from Google sign-in
+        setNotification({ type: "error", message: mapGoogleError(result.error) });
+      }
+      else if (result?.ok) {
+        // Successful sign-in
+        console.log('Google sign-in successful');
+        router.push("/"); // redirect to home page or desired page
+      }
+    }
+    catch (error) {
+      console.error("Google sign-in error:", error);
+      setNotification({ type: "error", message: "Unable to connect to Google. Please check your connection and try again." });
+    }
+    finally {
+      setGoogleLoading(false);
+    }
+  };
+
+  // Forgot Password handler
+  const handleForgotPassword = async () => {
+    if(!forgotEmail) {
+      setNotification({ type: "error", message: "Please enter your email address." });
+      return;
+    }
+
+    // Validate email format
+    const emailRegex = /^\S+@\S+\.\S+$/;
+    if(!emailRegex.test(forgotEmail)) {
+      setNotification({ type: "error", message: "Invalid email format" });
+      return;
+    }
+
+    setForgotPasswordLoading(true);
+    setNotification(null);
+
+    try {
+      const response = await fetch("/api/auth/forgot_password", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: forgotEmail }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        setNotification({ type: "success", message: data.message });
+        setForgotEmail("");
+      }
+      else {
+        setNotification({ type: "error", message: data.error || "Failed to send reset email" });
+      }
+    }
+    catch(error) {
+      console.error("Forgot password error:", error);
+      setNotification({ type: "error", message: "Failed to send reset email. Please try again later." });
+    }
+    finally {
+      setForgotPasswordLoading(false);
+    }
+  };
+
+  // Handle Reset Password
+  const handleResetPassword = async (values: typeof resetForm.values) => {
+    const token = resetToken || searchParams.get("reset_token");
+
+    if(!token) {
+      setNotification({ type: "error", message: "Invalid reset token." });
+      return;
+    }
+
+    setResetPasswordLoading(true);
+    setNotification(null);
+
+    try {
+      const response = await fetch("/api/auth/reset_password", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          token,
+          password: values.password,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        setNotification({ type: "success", message: "Password reset successfully! Redirecting to login..." });
+        resetForm.reset();
+        setTimeout(() => {
+          setShowResetPassword(false);
+          setIsLogin(true);
+          router.replace("/auth");
+        }, 2000);
+      } else {
+        setNotification({ type: "error", message: data.error || "Failed to reset password" });
+      }
+    } catch (error) {
+      console.error("Reset password error:", error);
+      setNotification({ type: "error", message: "Failed to reset password. Please try again later." });
+    } finally {
+      setResetPasswordLoading(false);
+    }
+  };
+
+  // Determine the form submission handler based on the current state
+  let onSubmitHandler: React.FormEventHandler<HTMLFormElement>;
+  if(showResetPassword) {
+    onSubmitHandler = resetForm.onSubmit(handleResetPassword);
+  }
+  else if(isLogin) {
+    onSubmitHandler = form.onSubmit(handleLogin);
+  }
+  else {
+    onSubmitHandler = form.onSubmit(handleRegister);
+  }
 
   return (
     <div className={classes.wrapper}>
       <Paper className={classes.form}>
-        <form onSubmit={form.onSubmit(handleSubmit)}>
-          {!showForgot && (
+        {notification && (
+          <Alert
+            icon={notification.type === "success" ? <IconCheck size="1rem" /> : <IconAlertCircle size="1rem" />}
+            title={notification.type === "success" ? "Success!" : "Error!"}
+            color={notification.type === "success" ? "green" : "red"}
+            mb="md"
+            onClose={() => setNotification(null)}
+            withCloseButton
+          >
+            {notification.message}
+          </Alert>
+        )}
+
+        <form onSubmit={onSubmitHandler}>
+          {!showForgotPassword && !showResetPassword && (
             <Title order={2} className={classes.title}>
               {isLogin ? 'Welcome back!' : 'Create an account'}
             </Title>
           )}
 
-          {/* Success Message */}
-          {success && (
-            <Alert
-              icon={<IconCheck size="1rem" />}
-              title="Success!"
-              color="green"
-              mb="md"
-              onClose={() => setSuccess('')}
-              withCloseButton
-            >
-              {success}
-            </Alert>
-          )}
+          {/* Reset Password Form */}
+          {showResetPassword ? (
+            <Paper className={classes.form} mt="md" p="md">
+              <Title order={3} mb="md">Set New Password</Title>
+              <Text mb="md">
+                Enter your new password below.
+              </Text>
 
-          {/* Error Message */}
-          {error && (
-            <Alert
-              icon={<IconAlertCircle size="1rem" />}
-              title="Error!"
-              color="red"
-              mb="md"
-              onClose={() => setError('')}
-              withCloseButton
-            >
-              {error}
-            </Alert>
-          )}
+              <PasswordInput
+                label="New Password"
+                placeholder="Enter your new password"
+                size="md"
+                radius="md"
+                {...resetForm.getInputProps("password")}
+                visibilityToggleButtonProps={{ "aria-label": "toggle password visibility" }}
+              />
 
-          {/* Forgot Password Form */}
-          {showForgot ? (
+              <PasswordInput
+                label="Confirm New Password"
+                placeholder="Confirm your new password"
+                mt="md"
+                size="md"
+                radius="md"
+                {...resetForm.getInputProps("confirmPassword")}
+                visibilityToggleButtonProps={{ "aria-label": "toggle confirm password visibility" }}
+              />
+
+              <Button fullWidth mt="md" size="md" radius="md" type="submit" disabled={resetPasswordLoading} loading={resetPasswordLoading}>
+                Reset Password
+              </Button>
+
+              <Text ta="center" mt="md">
+                <Anchor fw={500} onClick={() => {
+                  setShowResetPassword(false);
+                  setIsLogin(true);
+                  router.replace('/auth');
+                }}>
+                  Back to login
+                </Anchor>
+              </Text>
+            </Paper>
+          ) : showForgotPassword ? (
+            // Forgot Password Form
             <Paper className={classes.form} mt="md" p="md">
               <Title order={3} mb="md">Reset your password</Title>
               <Text mb="md">
                 Enter your email address below, and we will send you a link to reset your password.
               </Text>
+              
               <TextInput
                 label="Email Address"
                 placeholder="Enter your email"
@@ -216,68 +390,22 @@ export function Authentication() {
                 onChange={(e) => setForgotEmail(e.target.value)}
               />
 
-              <Button
-                fullWidth
-                mt="md"
-                size="md"
-                radius="md"
-                //onClick={handleForgotPassword}
-                disabled={forgotLoading}
-                loading={forgotLoading}
-              >
+              <Button fullWidth mt="md" size="md" radius="md" onClick={handleForgotPassword} disabled={forgotPasswordLoading} loading={forgotPasswordLoading}>
                 Reset Password
               </Button>
 
               <Text ta="center" mt="md">
-                <Anchor fw={500} onClick={() => setShowForgot(false)}>
+                <Anchor fw={500} onClick={() => setShowForgotPassword(false)}>
                   Back to login
                 </Anchor>
               </Text>
-
-              {/* Error and Success Messages for Forgot Password */}
-              {forgotError && (
-                <Alert color="red" mt="md" onClose={() => setForgotError("")} withCloseButton>
-                  {forgotError}
-                </Alert>
-              )}
-
-              {forgotSuccess && (
-                <Alert color="green" mt="md" onClose={() => setForgotSuccess("")} withCloseButton>
-                  {forgotSuccess}
-                </Alert>
-              )}
             </Paper>
           ) : (
             <>
               {/* Google Sign In Button */}
 
               <Group grow mb="md" mt="md">
-                <GoogleButton radius="xl"
-                  onClick={async () => {
-                    try {
-                      setError("");
-
-                      const result = await signIn("google", {
-                        redirect: false,
-                        callbackUrl: "/" // Change this to wherever I want to go to after I login via google
-                      });
-
-                      if (result?.error) {
-                        // Handle error from Google sign-in
-                        setError(mapGoogleError(result.error));
-                      }
-                      else if (result?.ok) {
-                        // Successful sign-in
-                        console.log('Google sign-in successful');
-                        router.push("/"); // redirect to home page or desired page
-                      }
-                    }
-                    catch (error) {
-                      console.error("Google sign-in error:", error);
-                      setError("Unable to connect to Google. Please check your connection and try again.");
-                    }
-                  }}
-                >
+                <GoogleButton radius="xl" onClick={handleGoogleSignIn} disabled={googleLoading} loading={googleLoading}>
                   {isLogin ? 'Sign in with Google' : 'Sign up with Google'}
                 </GoogleButton>
               </Group>
@@ -337,7 +465,7 @@ export function Authentication() {
 
               {isLogin && (
                 <Text ta="right" mt="xs" mb="md">
-                  <Anchor fw={500} onClick={() => setShowForgot(true)}>
+                  <Anchor fw={500} onClick={() => setShowForgotPassword(true)}>
                     Forgot password?
                   </Anchor>
                 </Text>
@@ -353,24 +481,21 @@ export function Authentication() {
               )}
 
               <Button fullWidth mt="xl" size="md" radius="md" type="submit" loading={loading} disabled={loading}>
-                {loading ?
-                  (isLogin ? "Signing in..." : "Creating account...") :
-                  (isLogin ? "Sign in" : "Register")
-                }
+                {isLogin ? 'Login' : 'Register'}
               </Button>
 
               <Text ta="center" mt="md">
                 {isLogin ? (
                   <>
                     Don&apos;t have an account?{' '}
-                    <Anchor fw={500} onClick={() => { setIsLogin(false); form.reset(); setError(''); setSuccess(''); }}>
+                    <Anchor fw={500} onClick={() => { setIsLogin(false); form.reset(); setNotification(null); }}>
                       Register
                     </Anchor>
                   </>
                 ) : (
                   <>
                     Already have an account?{' '}
-                    <Anchor fw={500} onClick={() => { setIsLogin(true); form.reset(); setError(''); setSuccess(''); }}>
+                    <Anchor fw={500} onClick={() => { setIsLogin(true); form.reset(); setNotification(null); }}>
                       Login
                     </Anchor>
                   </>

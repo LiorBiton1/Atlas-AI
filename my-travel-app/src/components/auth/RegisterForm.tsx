@@ -1,4 +1,4 @@
-import { Anchor, Button, Group, PasswordInput, Text, TextInput } from "@mantine/core";
+import { Anchor, Button, Group, PasswordInput, Text, TextInput, Title } from "@mantine/core";
 import { useForm } from "@mantine/form";
 import { GoogleButton } from "./GoogleButton";
 import { signIn } from "next-auth/react";
@@ -110,6 +110,9 @@ export function RegisterForm({ onSuccess, onLogin, onNotify }: Readonly<Register
 
     return (
         <>
+            {/* Title */}
+            <Title order={2} mb="md">Create an Account</Title>
+            
             {/* Google Sign-Up Button */}
             <Group grow mb="md" mt="md">
                 <GoogleButton radius="xl" onClick={handleGoogleSignUp} loading={googleLoading} disabled={googleLoading}>

@@ -29,21 +29,23 @@ export function Authentication() {
     // Notification State
     const [notification, setNotification] = useState<{ type: "success" | "error"; message: string } | null>(null);
 
-    // Callback Error Handler
-    // If there is a reset token, switch to reset mode
+    // Set the initial mode based on URL parameters
     useEffect(() => {
+        // If there is a reset token, switch to reset mode
         if (resetToken) {
             setMode("resetPassword");
         }
+        // If there is a mode in the URL, use that
         else if(formMode && MODES.includes(formMode)) {
             setMode(formMode);
         }
+        // Default to login mode if no reset token or mode is specified
         else {
             setMode("login");
         }
     }, [resetToken, formMode]);
 
-    // Handle Google OAuth errors
+    // Handle Google OAuth errors and Callback URLs
     useEffect(() => {
         const error = searchParams.get("error");
         const callbackUrl = searchParams.get("callbackUrl");
@@ -56,6 +58,7 @@ export function Authentication() {
             const noErrorOrCallbackParams = new URLSearchParams(Array.from(searchParams.entries()));
             noErrorOrCallbackParams.delete("error");
             noErrorOrCallbackParams.delete("callbackUrl");
+            
             router.replace(`${pathname}?${noErrorOrCallbackParams.toString()}`);
         }
     }, [pathname, searchParams, router]);

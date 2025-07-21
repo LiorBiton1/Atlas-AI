@@ -30,7 +30,7 @@ export default function Header() {
 
             <div className="ml-4 flex gap-2">
                 <Button variant="ghost" size="sm" asChild className="hover:text-[rgba(0,191,255,1)] text-[rgba(2,48,71,1)]">
-                    <Link href="/auth">Sign In</Link>
+                    <Link href="/auth?mode=login">Sign In</Link>
                 </Button>
 
                 <Button size="sm" asChild className="bg-gradient-to-r from-[rgba(0,191,255,1)] to-[rgba(64,224,208,1)] hover:from-[rgba(0,191,255,0.9)] hover:to-[rgba(64,224,208,0.9)]">

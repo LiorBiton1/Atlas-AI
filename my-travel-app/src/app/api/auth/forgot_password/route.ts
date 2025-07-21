@@ -78,7 +78,7 @@ async function sendPasswordResetEmail(email: string, token: string) {
         }
     });
 
-    const resetUrl = `${process.env.NEXTAUTH_URL || 'https://localhost:3000'}/auth?reset_token=${token}`;
+    const resetUrl = `${process.env.NEXTAUTH_URL || 'https://localhost:3000'}/auth?mode=resetPassword&reset_token=${token}`;
 
     const mailOptions = {
         from: process.env.EMAIL_USER,

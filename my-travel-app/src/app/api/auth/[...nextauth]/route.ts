@@ -70,7 +70,7 @@ const handler = NextAuth({
         })
     ],
     pages: {
-        signIn: "/auth", // Redirect sign-in errors to auth page
+        signIn: "/auth?mode=login", // Redirect sign-in errors to auth page
         error: "/auth", // Redirect all errors to auth page
     },
     callbacks: {

@@ -1,7 +1,7 @@
 import { Anchor, Button, Paper, PasswordInput, Text, Title } from '@mantine/core';
 import { useForm } from '@mantine/form';
 import { useState } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useSearchParams } from 'next/navigation';
 
 interface ResetPasswordFormProps {
     onFinish: () => void;
@@ -9,7 +9,6 @@ interface ResetPasswordFormProps {
 }
 
 export function ResetPasswordForm({ onFinish, onNotify }: Readonly<ResetPasswordFormProps>) {
-    const router = useRouter();
     const searchParams = useSearchParams();
     const resetToken = searchParams.get("reset_token");
 
@@ -53,7 +52,6 @@ export function ResetPasswordForm({ onFinish, onNotify }: Readonly<ResetPassword
                 resetForm.reset();
                 setTimeout(() => {
                     onFinish();
-                    router.replace("/auth");
                 }, 1500);
             } else {
                 onNotify?.("error", data.error || "Failed to reset password");
@@ -100,7 +98,7 @@ export function ResetPasswordForm({ onFinish, onNotify }: Readonly<ResetPassword
                 </Button>
 
                 <Text ta="center" mt="md">
-                    <Anchor fw={500} onClick={() => {onFinish(); router.replace('/auth'); }}>
+                    <Anchor fw={500} onClick={onFinish}>
                         Back to login
                     </Anchor>
                 </Text>

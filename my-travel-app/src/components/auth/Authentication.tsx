@@ -10,42 +10,71 @@ import { IconAlertCircle, IconCheck } from '@tabler/icons-react';
 
 import classes from './Authentication.module.css';
 
+const MODES = ["login", "register", "forgotPassword", "resetPassword"] as const;
+type Mode = (typeof MODES)[number];
+
 export function Authentication() {
     const router = useRouter();
     const pathname = usePathname();
     const searchParams = useSearchParams();
+
+    // URL Parameters
     const resetToken = searchParams.get("reset_token");
+    const formMode = searchParams.get("mode") as Mode | null;
 
     // Form Toggle States
-    const [mode, setMode] = useState<"login" | "register" | "forgotPassword" | "resetPassword">("login");
+    const [mode, setMode] = useState<Mode>("login");
+    
 
     // Notification State
     const [notification, setNotification] = useState<{ type: "success" | "error"; message: string } | null>(null);
 
     // Callback Error Handler
-    useEffect(() => {
-        const error = searchParams.get("error");
-        if (pathname === "/auth" && error) {
-            setNotification({ type: "error", message: mapGoogleError(error) });
-            router.replace("/auth");
-        }
-    }, [pathname, searchParams, router]);
-
     // If there is a reset token, switch to reset mode
     useEffect(() => {
         if (resetToken) {
             setMode("resetPassword");
         }
-    }, [resetToken]);
+        else if(formMode && MODES.includes(formMode)) {
+            setMode(formMode);
+        }
+        else {
+            setMode("login");
+        }
+    }, [resetToken, formMode]);
+
+    // Handle Google OAuth errors
+    useEffect(() => {
+        const error = searchParams.get("error");
+        const callbackUrl = searchParams.get("callbackUrl");
+        if (pathname === "/auth" && (error || callbackUrl)) {
+            // If there is an error, display it
+            if(error) {
+                setNotification({ type: "error", message: mapGoogleError(error) });
+            }
+            // Remove only the error and callbackUrl parameter from the URL but keep the mode/token
+            const noErrorOrCallbackParams = new URLSearchParams(Array.from(searchParams.entries()));
+            noErrorOrCallbackParams.delete("error");
+            noErrorOrCallbackParams.delete("callbackUrl");
+            router.replace(`${pathname}?${noErrorOrCallbackParams.toString()}`);
+        }
+    }, [pathname, searchParams, router]);
 
     // If a mode changes clear the notification
     useEffect(() => {
         setNotification(null);
     }, [mode]);
 
-    const backToLogin = () => setMode("login");
-    const toRegister = () => setMode("register");
-    const toForgotPassword = () => setMode("forgotPassword");
+    // Update the URL when changing modes
+    const setUrlMode = (newMode: Mode) => {
+        const params = new URLSearchParams(Array.from(searchParams.entries()));
+        params.set("mode", newMode);
+        router.replace(`${pathname}?${params.toString()}`);
+    };
+
+    const backToLogin = () => setUrlMode("login");
+    const toRegister = () => setUrlMode("register");
+    const toForgotPassword = () => setUrlMode("forgotPassword");
 
     return (
         <div className={classes.wrapper}>

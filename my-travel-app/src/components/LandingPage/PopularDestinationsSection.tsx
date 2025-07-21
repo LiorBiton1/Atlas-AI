@@ -3,7 +3,7 @@ import { Badge } from "@/components/ui/badge"
 import Image from "next/image"
 import { MapPin, Star } from "lucide-react"
 
-export function DestinationShowcase() {
+export default function PopularDestinationsSection() {
   const destinations = [
     {
       name: "Maldives",
@@ -42,9 +42,11 @@ export function DestinationShowcase() {
           <Badge variant="secondary" className="bg-[rgba(0,191,255,0.1)] text-[rgba(0,191,255,1)] border-[rgba(0,191,255,0.2)]">
             Popular Destinations
           </Badge>
+
           <h2 className="text-3xl font-bold tracking-tighter sm:text-5xl text-[rgba(2,48,71,1)]">
             Discover Your Next Paradise
           </h2>
+
           <p className="max-w-[600px] text-[rgba(2,48,71,0.7)] md:text-xl">
             From tropical beaches to cultural adventures, explore the world&apos;s most beautiful destinations
           </p>
@@ -52,22 +54,16 @@ export function DestinationShowcase() {
 
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
           {destinations.map((destination) => (
-            <Card
-              key={destination.name}
-              className="border-0 shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-2 overflow-hidden bg-white"
-            >
+            <Card key={destination.name} className="border-0 shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-2 overflow-hidden bg-white">
               <div className="relative h-48">
-                <Image
-                  src={destination.image || "/placeholder.svg"}
-                  alt={destination.name}
-                  fill
-                  className="object-cover"
-                />
+                <Image src={destination.image || "/placeholder.svg"} alt={destination.name} fill className="object-cover" />
+
                 <div className="absolute top-3 left-3">
                   <Badge className="bg-[rgba(255,255,255,0.9)] text-[rgba(2,48,71,1)] font-semibold shadow">
                     {destination.badge}
                   </Badge>
                 </div>
+
                 <div className="absolute top-3 right-3 flex items-center gap-1 bg-[rgba(255,255,255,0.9)] rounded-full px-2 py-1 shadow">
                   <Star className="h-3 w-3 fill-[#FFD166] text-[#FFD166]" />
                   <span className="text-xs font-medium text-[rgba(2,48,71,1)]">{destination.rating}</span>
@@ -76,8 +72,10 @@ export function DestinationShowcase() {
               <CardContent className="p-4">
                 <div className="flex items-center gap-1 mb-2">
                   <MapPin className="h-4 w-4 text-[#00BFFF]" />
+
                   <h3 className="font-semibold text-[rgba(2,48,71,1)]">{destination.name}</h3>
                 </div>
+                
                 <p className="text-sm text-[rgba(2,48,71,0.7)]">{destination.description}</p>
               </CardContent>
             </Card>

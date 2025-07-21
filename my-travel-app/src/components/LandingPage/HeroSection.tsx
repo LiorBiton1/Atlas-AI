@@ -1,6 +1,7 @@
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { ArrowRight, Sparkles, Star } from "lucide-react"
+import  Link  from "next/link"
 import Image from "next/image"
 
 export default function HeroSection() {
@@ -27,14 +28,14 @@ export default function HeroSection() {
                             Your Dream Vacation Awaits
                         </h1>
 
-                        <p className="max-w-[600px] text-[rgba(255,255,255,0.95)] md:text-xl drop-shadow-md">
+                        <p className="max-w-[600px] text-[rgba(255,255,255,0.95)] md:text-xl drop-shadow-md mx-auto">
                             Escape the ordinary and discover paradise with atlasAI. From tropical beaches to mountain retreats,
                             we&apos;ll craft the perfect getaway that matches your vacation dreams.
                         </p>
                     </div>
                     <div className="flex flex-col gap-2 min-[400px]:flex-row">
                         <Button size="lg"className="bg-gradient-to-r from-[rgba(255,104,104,1)] to-[rgba(255,209,102,1)] hover:from-[rgba(255,104,104,0.9)] hover:to-[rgba(255,209,102,0.9)] shadow-lg text-[rgba(255,255,255,1)] font-semibold">
-                            Plan My Dream Trip
+                            <Link href="/auth?mode=register">Plan My Dream Trip</Link>
                             <ArrowRight className="ml-2 h-4 w-4 text-[rgba(255,255,255,1)]" />
                         </Button>
 

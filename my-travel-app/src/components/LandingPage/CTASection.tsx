@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
 import Image from "next/image"
+import Link from "next/link"
 
 export default function CTASection() {
     return (
@@ -22,14 +22,11 @@ export default function CTASection() {
                             Join thousands of happy travelers who have found their perfect vacation with atlasAI.
                         </p>
                     </div>
-                    <div className="w-full max-w-[500px] space-y-2 mx-auto">
-                        <form className="flex gap-2">
-                            <Input type="email" placeholder="Enter your email for vacation inspiration" className="flex-1 bg-[rgba(255,255,255,0.85)] border-[rgba(2,48,71,0.15)] text-[rgba(2,48,71,1)] placeholder:text-[rgba(2,48,71,0.7)] shadow backdrop-blur-sm" />
-                            
-                            <Button type="submit" className="bg-gradient-to-r from-[rgba(6,214,160,1)] to-[rgba(64,224,208,1)] hover:from-[rgba(6,214,160,0.9)] hover:to-[rgba(64,224,208,0.9)] text-[rgba(255,255,255,1)] font-semibold">
-                                Get Started
-                            </Button>
-                        </form>
+                    <div className="w-full max-w-[500px] space-y-2 mx-auto flex flex-col items-center">
+                        <Button type="submit" className="bg-gradient-to-r from-[rgba(6,214,160,1)] to-[rgba(64,224,208,1)] hover:from-[rgba(6,214,160,0.9)] hover:to-[rgba(64,224,208,0.9)] text-[rgba(255,255,255,1)] font-semibold">
+                            <Link href="/auth?mode=register">Get Started</Link>
+                        </Button>
+
                         <p className="text-base md:text-lg text-[rgba(255,255,255,0.97)] font-medium">
                             Start planning your dream vacation for free. No credit card required.
                         </p>

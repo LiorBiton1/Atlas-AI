@@ -72,7 +72,12 @@ export function Authentication() {
         router.replace(`${pathname}?${params.toString()}`);
     };
 
-    const backToLogin = () => setUrlMode("login");
+    const backToLogin = () => {
+        const noResetTokenParams = new URLSearchParams(Array.from(searchParams.entries()));
+        noResetTokenParams.set("mode", "login");
+        noResetTokenParams.delete("reset_token");
+        router.replace(`${pathname}?${noResetTokenParams.toString()}`);
+    }
     const toRegister = () => setUrlMode("register");
     const toForgotPassword = () => setUrlMode("forgotPassword");
 

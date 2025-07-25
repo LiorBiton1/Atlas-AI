@@ -4,10 +4,10 @@ import { PASSWORD_MESSAGE, RESET_PASSWORD_MESSAGE } from "@/utils/auth/messages"
 
 export async function POST(request: NextRequest) {
     try {
-        const { token, password } = await request.json();
-        
+        const { resetToken, password } = await request.json();
+
         // Validate input
-        if (!token || !password) {
+        if (!resetToken || !password) {
             return NextResponse.json({ error: RESET_PASSWORD_MESSAGE.PASSWORD_AND_TOKEN_REQUIRED }, { status: 400 });
         }
 
@@ -16,7 +16,7 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({ error: PASSWORD_MESSAGE.MIN_LENGTH }, { status: 400 });
         }
 
-        const result = await resetUserPassword(token, password);
+        const result = await resetUserPassword(resetToken, password);
 
         if(result.error) {
             return NextResponse.json({ error: result.error }, { status: 400 });

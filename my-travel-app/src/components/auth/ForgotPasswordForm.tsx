@@ -1,9 +1,8 @@
 import { Anchor, Button, Paper, Text, TextInput, Title } from '@mantine/core';
 import { useState, useCallback} from 'react';
 import { isValidEmail } from '@/utils/auth/validation';
-import { EMAIL_MESSAGE } from '@/utils/auth/validationMessages';
-import { forgotPassword } from '@/utils/auth/authServiceClient';
-import { FORGOT_PASSWORD_MESSAGE } from '@/utils/auth/authMessages';
+import { EMAIL_MESSAGE, FORGOT_PASSWORD_MESSAGE } from '@/utils/auth/messages';
+import { forgotPassword } from '@/utils/auth/client';
 
 interface ForgotPasswordFormProps {
     onBack: () => void;

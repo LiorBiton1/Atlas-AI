@@ -1,4 +1,3 @@
-
 /**
  * Sends a POST request to reset a user's password using a reset token and new password.
  * @param token - The password reset token.

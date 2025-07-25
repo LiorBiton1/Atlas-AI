@@ -6,7 +6,7 @@ import { GOOGLE_MESSAGE, mapGoogleError } from "../../utils/auth/google";
 import { useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { isValidEmail, isValidUsername, isValidPassword } from "@/utils/auth/validation";
-import { LOGIN_MESSAGE } from "@/utils/auth/authMessages";
+import { LOGIN_MESSAGE } from "@/utils/auth/messages";
 
 interface LoginFormProps {
     onSuccess?: () => void;

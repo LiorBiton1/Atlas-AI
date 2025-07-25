@@ -6,9 +6,8 @@ import { GOOGLE_MESSAGE, mapGoogleError } from "../../utils/auth/google";
 import { useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { isValidEmail, isValidUsername, isValidPassword, isValidName } from "@/utils/auth/validation";
-import { registerUser } from "@/utils/auth/authServiceClient";
-import { EMAIL_MESSAGE, NAME_MESSAGE, USERNAME_MESSAGE, PASSWORD_MESSAGE } from "@/utils/auth/validationMessages";
-import { REGISTRATION_MESSAGE } from "@/utils/auth/authMessages";
+import { registerUser } from "@/utils/auth/client";
+import { EMAIL_MESSAGE, NAME_MESSAGE, USERNAME_MESSAGE, PASSWORD_MESSAGE, REGISTRATION_MESSAGE } from "@/utils/auth/messages";
 
 interface RegisterFormProps {
     onSuccess?: () => void;

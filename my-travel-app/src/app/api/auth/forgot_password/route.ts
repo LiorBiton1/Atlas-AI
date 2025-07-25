@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { isValidEmail } from "@/utils/auth/validation";
-import { initiatePasswordReset } from "@/utils/auth/authServiceServer";
-import { EMAIL_MESSAGE } from "@/utils/auth/validationMessages";
+import { initiatePasswordReset } from "@/utils/auth/server";
+import { EMAIL_MESSAGE } from "@/utils/auth/messages";
 
 export async function POST(request: NextRequest) {
     try {

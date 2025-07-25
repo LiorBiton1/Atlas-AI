@@ -2,7 +2,7 @@ import NextAuth from "next-auth";
 import GoogleProvider from "next-auth/providers/google";
 import CredentialsProvider from "next-auth/providers/credentials";
 import { connectDB } from "@/lib/mongodb";
-import { findUserByEmail, createGoogleUser, verifyUserCredentials } from "@/utils/auth/authServiceServer";
+import { findUserByEmail, createGoogleUser, verifyUserCredentials } from "@/utils/auth/server";
 
 const handler = NextAuth({
     providers: [

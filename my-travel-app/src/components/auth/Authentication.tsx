@@ -19,7 +19,7 @@ export function Authentication() {
     const searchParams = useSearchParams();
 
     // URL Parameters
-    const resetToken = searchParams.get("reset_token");
+    const resetToken = searchParams.get("reset_token")?.trim();
     const formMode = searchParams.get("mode") as Mode | null;
 
     // Form Toggle States
@@ -31,19 +31,55 @@ export function Authentication() {
 
     // Set the initial mode based on URL parameters
     useEffect(() => {
+        const allowedParams = new Set(["mode", "reset_token"]);
+
+        // Check for invalid parameters
+        const currentparams = Array.from(searchParams.keys());
+        const hasInvalidParams = currentparams.some(param => !allowedParams.has(param));
+
+        if(hasInvalidParams) {
+            // Remove the invalid parameters from the URL
+            const cleanedParams = new URLSearchParams();
+            if(formMode) {
+                cleanedParams.set("mode", formMode);
+            }
+            if(resetToken) {
+                cleanedParams.set("reset_token", resetToken);
+            }
+            router.replace(`${pathname}?${cleanedParams.toString()}`);
+            return;
+        }
+
+        // Check if mode parameter is missing or invalid
+        const isInvalidMode = !formMode || !MODES.includes(formMode);
+
+        // Check if the parameter reset_token is present but empty
+        const hasEmptyResetToken = !searchParams.has("reset_token") && (!resetToken || resetToken === "");
+
+        // Check if reset password mode is selected but no valid reset token
+        const isResetPasswordWithoutToken = formMode === "resetPassword" && (!resetToken || resetToken === "");
+
+        // check if the reset_token is present but is in the wrong mode
+        const hasResetTokenWithWrongMode = resetToken && formMode !== "resetPassword";
+
+        // If there is an invalid case default to login
+        if(isInvalidMode || isResetPasswordWithoutToken || (formMode === "resetPassword" && hasEmptyResetToken) || hasResetTokenWithWrongMode) {
+            setMode("login");
+            const params = new URLSearchParams();
+            params.set("mode", "login");
+            router.replace(`${pathname}?${params.toString()}`);
+            return;
+        }
+
         // If there is a reset token, switch to reset mode
-        if (resetToken) {
+        if (formMode === "resetPassword" && resetToken && resetToken !== "") {
             setMode("resetPassword");
         }
         // If there is a mode in the URL, use that
         else if(formMode && MODES.includes(formMode)) {
             setMode(formMode);
         }
-        // Default to login mode if no reset token or mode is specified
-        else {
-            setMode("login");
-        }
-    }, [resetToken, formMode]);
+    }, [resetToken, formMode, searchParams, router, pathname]);
 
     // Handle Google OAuth errors and Callback URLs
     useEffect(() => {

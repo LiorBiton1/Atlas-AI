@@ -2,8 +2,7 @@ import NextAuth from "next-auth";
 import GoogleProvider from "next-auth/providers/google";
 import CredentialsProvider from "next-auth/providers/credentials";
 import { connectDB } from "@/lib/mongodb";
-import User from "@/models/User";
-import bcrypt from "bcryptjs";
+import { findUserByEmail, createGoogleUser, verifyUserCredentials } from "@/utils/auth/authServiceServer";
 
 const handler = NextAuth({
     providers: [
@@ -25,42 +24,8 @@ const handler = NextAuth({
                 }
 
                 try {
-                    await connectDB();
-                
-                    // Find user by username or email
-                    const user = await User.findOne({ 
-                        $or: [
-                            { email: credentials.email }, 
-                            { username: credentials.username }
-                        ] 
-                    });
-
-                    if(!user) {
-                        // User not found
-                        return null;
-                    }
-
-                    // Check if user has a password (not a Google OAuth user)
-                    if(!user.password) {
-                        // This is a Google OAuth user trying to sign in with credentials
-                        return null;
-                    }
-
-                    // Verify the password
-                    const isPasswordValid = await bcrypt.compare(credentials.password, user.password);
-
-                    if(!isPasswordValid) {
-                        // Invalid password
-                        return null;
-                    }
-
-                    // Successful login
-                    return {
-                        id: user._id.toString(),
-                        name: user.name,
-                        email: user.email,
-                        username: user.username,
-                    };
+                    // verify user credentials
+                    return await verifyUserCredentials(credentials.email, credentials.username, credentials.password);
                 }
                 catch(error) {
                     console.error("Authorization error:", error);
@@ -77,32 +42,13 @@ const handler = NextAuth({
         async signIn({ user, account }) {
             if(account?.provider === "google") {
                 try {
-                    await connectDB();
+                    // Create or find the user in the database
+                    await createGoogleUser({
+                        email: user.email,
+                        name: user.name ?? "Google User", // If the name isn't provided, use a default name
+                        googleId: account.providerAccountId,
+                    });
 
-                    // Check if user already exists
-                    const existingUser = await User.findOne({ email: user.email });
-
-                    if(!existingUser) {
-                        // Create a username from email
-                        const baseUsername = user.email?.split("@")[0] || 'user';
-                        let username = baseUsername;
-                        let counter = 1;
-
-                        // Ensure username is unique
-                        while (await User.findOne({ username })) {
-                            username = `${baseUsername}${counter}`;
-                            counter++;
-                        }
-
-                        // Create a new user for Google sign-in
-                        await User.create({
-                            username,
-                            email: user.email,
-                            name: user.name,
-                            googleId: account.providerAccountId,
-                            // No password for Google users
-                        });
-                    }
                     return true;
                 }
                 catch(error) {
@@ -115,7 +61,7 @@ const handler = NextAuth({
         async session({ session }) {
             if(session.user?.email) {
                 await connectDB();
-                const dbUser = await User.findOne({ email: session.user.email });
+                const dbUser = await findUserByEmail(session.user.email);
                 if(dbUser) {
                     session.user.username = dbUser.username;
                     session.user.id = dbUser._id.toString();

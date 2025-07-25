@@ -1,11 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Alert, Paper } from '@mantine/core';
 import { useRouter, usePathname, useSearchParams } from 'next/navigation';
 import { LoginForm } from './LoginForm';
 import { RegisterForm } from './RegisterForm';
 import { ForgotPasswordForm } from './ForgotPasswordForm';
 import { ResetPasswordForm } from './ResetPasswordForm';
-import { mapGoogleError } from '../../utils/auth';
+import { mapGoogleError } from '../../utils/auth/google';
 import { IconAlertCircle, IconCheck } from '@tabler/icons-react';
 
 import classes from './Authentication.module.css';
@@ -69,20 +69,21 @@ export function Authentication() {
     }, [mode]);
 
     // Update the URL when changing modes
-    const setUrlMode = (newMode: Mode) => {
+    const setUrlMode = useCallback((newMode: Mode) => {
         const params = new URLSearchParams(Array.from(searchParams.entries()));
         params.set("mode", newMode);
         router.replace(`${pathname}?${params.toString()}`);
-    };
+    }, [searchParams, router, pathname]);
 
-    const backToLogin = () => {
+    const backToLogin = useCallback(() => {
         const noResetTokenParams = new URLSearchParams(Array.from(searchParams.entries()));
         noResetTokenParams.set("mode", "login");
         noResetTokenParams.delete("reset_token");
         router.replace(`${pathname}?${noResetTokenParams.toString()}`);
-    }
-    const toRegister = () => setUrlMode("register");
-    const toForgotPassword = () => setUrlMode("forgotPassword");
+    }, [searchParams, router, pathname]);
+
+    const toRegister = useCallback(() => setUrlMode("register"), [setUrlMode]);
+    const toForgotPassword = useCallback(() => setUrlMode("forgotPassword"), [setUrlMode]);
 
     return (
         <div className={classes.wrapper}>

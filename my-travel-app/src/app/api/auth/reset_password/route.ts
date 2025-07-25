@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
-import { connectDB } from "@/lib/mongodb";
-import User from "@/models/User";
-import bcrypt from "bcryptjs";
+import { resetUserPassword } from "@/utils/auth/authServiceServer";
+import { PASSWORD_MESSAGE } from "@/utils/auth/validationMessages";
+import { RESET_PASSWORD_MESSAGE } from "@/utils/auth/authMessages";
 
 export async function POST(request: NextRequest) {
     try {
@@ -9,53 +9,23 @@ export async function POST(request: NextRequest) {
         
         // Validate input
         if (!token || !password) {
-            return NextResponse.json({
-                error: "Token and password are required"
-            }, { status: 400 });
+            return NextResponse.json({ error: RESET_PASSWORD_MESSAGE.PASSWORD_AND_TOKEN_REQUIRED }, { status: 400 });
         }
 
         // Validate password length
         if(password.length < 6) {
-            return NextResponse.json({
-                error: "Password must be at least 6 characters long"
-            }, { status: 400 });
+            return NextResponse.json({ error: PASSWORD_MESSAGE.MIN_LENGTH }, { status: 400 });
         }
 
-        // Connect to the database
-        await connectDB();
+        const result = await resetUserPassword(token, password);
 
-        // Find user with valid reset token
-        const user = await User.findOne({
-            resetPasswordToken: token,
-            resetPasswordExpires: { $gt: new Date() } // Check if token is still valid
-        });
-
-        if (!user) {
-            return NextResponse.json({
-                error: "Invalid or expired reset token"
-            }, { status: 400 });
+        if(result.error) {
+            return NextResponse.json({ error: result.error }, { status: 400 });
         }
-
-        // Hash the new password
-        const hashedPassword = await bcrypt.hash(password, 10);
-
-        // Update user's password and clear reset token
-        await User.findByIdAndUpdate(user._id, {
-            password: hashedPassword,
-            $unset: {
-                resetPasswordToken: 1,
-                resetPasswordExpires: 1
-            }
-        });
-
-        return NextResponse.json({
-            message: "Password reset successfully" 
-        }, { status: 200 });
+        return NextResponse.json({ message: result.message }, { status: 200 });
     }
     catch(error: unknown) {
         console.error("Reset password error:", error);
-        return NextResponse.json({
-            error: "Internal server error"
-        }, { status: 500 });
+        return NextResponse.json({ error: "Internal server error" }, { status: 500 });
     }
 }

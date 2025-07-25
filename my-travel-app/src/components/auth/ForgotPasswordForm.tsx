@@ -1,5 +1,9 @@
 import { Anchor, Button, Paper, Text, TextInput, Title } from '@mantine/core';
-import { useState } from 'react';
+import { useState, useCallback} from 'react';
+import { isValidEmail } from '@/utils/auth/validation';
+import { EMAIL_MESSAGE } from '@/utils/auth/validationMessages';
+import { forgotPassword } from '@/utils/auth/authServiceClient';
+import { FORGOT_PASSWORD_MESSAGE } from '@/utils/auth/authMessages';
 
 interface ForgotPasswordFormProps {
     onBack: () => void;
@@ -14,46 +18,39 @@ export function ForgotPasswordForm({ onBack, onNotify }: Readonly<ForgotPassword
     const [loading, setLoading] = useState(false);
 
     // Forgot Password Handler
-    const handleForgotPassword = async () => {
+    const handleForgotPassword = useCallback(async () => {
         if (!forgotEmail) {
-            onNotify?.("error", "Please enter your email address.");
+            onNotify?.("error", EMAIL_MESSAGE.REQUIRED);
             return;
         }
 
         // Validate email format
-        const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
-        if (!emailRegex.test(forgotEmail)) {
-            onNotify?.("error", "Invalid email format");
+        if (!isValidEmail(forgotEmail)) {
+            onNotify?.("error", EMAIL_MESSAGE.INVALID_FORMAT);
             return;
         }
 
         setLoading(true);
 
         try {
-            const response = await fetch("/api/auth/forgot_password", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ email: forgotEmail }),
-            });
+            const { ok, data } = await forgotPassword(forgotEmail);
 
-            const data = await response.json();
-
-            if (response.ok) {
-                onNotify?.("success", data.message);
+            if (ok) {
+                onNotify?.("success", FORGOT_PASSWORD_MESSAGE.SUCCESS);
                 setForgotEmail("");
             }
             else {
-                onNotify?.("error", data.error || "Failed to send reset email");
+                onNotify?.("error", data.error || FORGOT_PASSWORD_MESSAGE.FAILURE);
             }
         }
         catch (error) {
             console.error("Forgot password error:", error);
-            onNotify?.("error", "Failed to send reset email. Please try again later.");
+            onNotify?.("error", FORGOT_PASSWORD_MESSAGE.FAILURE_LATER);
         }
         finally {
             setLoading(false);
         }
-    };
+    }, [forgotEmail, onNotify]);
 
     return (
         <Paper p="md">
@@ -68,6 +65,7 @@ export function ForgotPasswordForm({ onBack, onNotify }: Readonly<ForgotPassword
                 size="md"
                 radius="md"
                 value={forgotEmail}
+                disabled={loading}
                 onChange={(e) => setForgotEmail(e.target.value)}
             />
 
@@ -78,7 +76,7 @@ export function ForgotPasswordForm({ onBack, onNotify }: Readonly<ForgotPassword
 
             {/* Back to Login Button */}
             <Text ta="center" mt="md">
-                <Anchor fw={500} onClick={onBack}>
+                <Anchor fw={500} onClick={loading ? undefined : onBack} style={{ pointerEvents: loading ? "none" : "auto", opacity: loading ? 0.5 : 1, cursor: loading ? "not-allowed" : "pointer" }}>
                     Back to login
                 </Anchor>
             </Text>

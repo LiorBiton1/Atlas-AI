@@ -2,9 +2,11 @@ import { Anchor, Button, Checkbox, Group, PasswordInput, Text, TextInput, Title 
 import { useForm } from "@mantine/form";
 import { GoogleButton } from "./GoogleButton";
 import { signIn } from "next-auth/react";
-import { mapGoogleError } from "../../utils/auth";
-import { useState } from "react";
+import { GOOGLE_MESSAGE, mapGoogleError } from "../../utils/auth/google";
+import { useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
+import { isValidEmail, isValidUsername, isValidPassword } from "@/utils/auth/validation";
+import { LOGIN_MESSAGE } from "@/utils/auth/authMessages";
 
 interface LoginFormProps {
     onSuccess?: () => void;
@@ -19,6 +21,7 @@ export function LoginForm({ onSuccess, onRegister, onForgotPassword, onNotify }:
     // Loading States
     const [loading, setLoading] = useState(false);
     const [googleLoading, setGoogleLoading] = useState(false);
+    const isSubmitting = loading || googleLoading;
 
     // Login Form
     const form = useForm({
@@ -28,18 +31,18 @@ export function LoginForm({ onSuccess, onRegister, onForgotPassword, onNotify }:
             rememberMe: false
         },
         validate: {
-            usernameOrEmail: value => (value.trim() ? null : "Username or email is required"),
-            password: value => (value.length >= 6 ? null : "Password must be at least 6 characters"),
+            usernameOrEmail: value => ((isValidEmail(value) || isValidUsername(value)) ? null : LOGIN_MESSAGE.USERNAME_OR_EMAIL_REQUIRED),
+            password: value => (isValidPassword(value) ? null : LOGIN_MESSAGE.INVALID_CREDENTIALS),
         },
     });
 
     // Login form submission handler
-    const handleLogin = async (values: typeof form.values) => {
+    const handleLogin = useCallback(async (values: typeof form.values) => {
         setLoading(true);
 
         try {
             // Determine if the user is using username or email
-            const isEmail = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(values.usernameOrEmail);
+            const isEmail = isValidEmail(values.usernameOrEmail);
 
             const result = await signIn("credentials", {
                 redirect: false,
@@ -49,11 +52,11 @@ export function LoginForm({ onSuccess, onRegister, onForgotPassword, onNotify }:
             });
 
             if (result?.error) {
-                onNotify?.("error", "Invalid username/email or password. Please try again.");
+                onNotify?.("error", LOGIN_MESSAGE.INVALID_CREDENTIALS);
             }
             else if (result?.ok) {
                 // Successful sign-in
-                onNotify?.("success", "Signed in successfully!");
+                onNotify?.("success", LOGIN_MESSAGE.SUCCESS);
                 setTimeout(() => {
                     onSuccess?.();
                     router.push("/"); // redirect after 1.5 seconds
@@ -62,15 +65,15 @@ export function LoginForm({ onSuccess, onRegister, onForgotPassword, onNotify }:
         }
         catch (error) {
             console.error("Sign-in error:", error);
-            onNotify?.("error", "Sign-in failed. Please try again.");
+            onNotify?.("error", LOGIN_MESSAGE.FAILURE);
         }
         finally {
             setLoading(false);
         }
-    };
+    }, [form, onNotify, onSuccess, router]);
 
     // Google Sign-In handler
-    const handleGoogleSignIn = async () => {
+    const handleGoogleSignIn = useCallback(async () => {
         try {
             setGoogleLoading(true);
 
@@ -85,18 +88,18 @@ export function LoginForm({ onSuccess, onRegister, onForgotPassword, onNotify }:
             }
             else if (result?.ok) {
                 // Successful sign-in
-                console.log("Google sign-in successful");
+                console.log(GOOGLE_MESSAGE.SIGN_IN_SUCCESS);
                 router.push("/"); // redirect to home page or desired page
             }
         }
         catch (error) {
             console.error("Google sign-in error:", error);
-            onNotify?.("error", "Unable to connect to Google. Please check your connection and try again.");
+            onNotify?.("error", GOOGLE_MESSAGE.SIGN_IN_FAILURE);
         }
         finally {
             setGoogleLoading(false);
         }
-    };
+    }, [onNotify, router]);
 
     return (
         <>
@@ -105,7 +108,7 @@ export function LoginForm({ onSuccess, onRegister, onForgotPassword, onNotify }:
 
             {/* Google Sign-In Button */}
             <Group grow mb="md" mt="md">
-                <GoogleButton radius="xl" onClick={handleGoogleSignIn} loading={googleLoading} disabled={googleLoading}>
+                <GoogleButton radius="xl" onClick={handleGoogleSignIn} loading={googleLoading} disabled={isSubmitting}>
                     Sign in with Google
                 </GoogleButton>
             </Group>
@@ -118,6 +121,7 @@ export function LoginForm({ onSuccess, onRegister, onForgotPassword, onNotify }:
                     placeholder="jsmith or john@example.com"
                     size="md"
                     radius="md"
+                    disabled={isSubmitting}
                     {...form.getInputProps("usernameOrEmail")}
                 />
 
@@ -128,13 +132,14 @@ export function LoginForm({ onSuccess, onRegister, onForgotPassword, onNotify }:
                     mt="md"
                     size="md"
                     radius="md"
+                    disabled={isSubmitting}
                     {...form.getInputProps("password")}
                     visibilityToggleButtonProps={{ "aria-label": "toggle password visibility" }}
                 />
 
                 {/* Forgot Password Link */}
                 <Text ta="right" mt="xs" mb="md">
-                    <Anchor fw={500} onClick={onForgotPassword}>
+                    <Anchor fw={500} onClick={isSubmitting ? undefined : onForgotPassword} style={{ pointerEvents: isSubmitting ? "none" : "auto", opacity: isSubmitting ? 0.5 : 1, cursor: isSubmitting ? "not-allowed" : "pointer" }}>
                         Forgot password?
                     </Anchor>
                 </Text>
@@ -144,18 +149,19 @@ export function LoginForm({ onSuccess, onRegister, onForgotPassword, onNotify }:
                     label="Keep me logged in"
                     mt="md"
                     size="md"
+                    disabled={isSubmitting}
                     {...form.getInputProps("rememberMe", { type: "checkbox" })}
                 />
 
                 {/* Login Button */}
-                <Button fullWidth mt="xl" size="md" radius="md" type="submit" loading={loading} disabled={loading}>
+                <Button fullWidth mt="xl" size="md" radius="md" type="submit" loading={loading} disabled={isSubmitting}>
                     Login
                 </Button>
 
                 {/* Register Link */}
                 <Text ta="center" mt="md">
                     Don&apos;t have an account?{" "}
-                    <Anchor fw={500} onClick={onRegister}>Register</Anchor>
+                    <Anchor fw={500} onClick={isSubmitting ? undefined : onRegister} style={{ pointerEvents: isSubmitting ? "none" : "auto", opacity: isSubmitting ? 0.5 : 1, cursor: isSubmitting ? "not-allowed" : "pointer" }}>Register</Anchor>
                 </Text>
             </form>
         </>

@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
-import { connectDB } from "@/lib/mongodb";
 import { MongoServerError } from "mongodb";
-import User from "@/models/User";
-import bcrypt from "bcryptjs";
+import { isValidEmail } from "@/utils/auth/validation";
+import { registerNewUser } from "@/utils/auth/authServiceServer";
+import { REGISTRATION_MESSAGE } from "@/utils/auth/authMessages";
+import { EMAIL_MESSAGE, PASSWORD_MESSAGE, USERNAME_MESSAGE } from "@/utils/auth/validationMessages";
 
 export async function POST(request: NextRequest) {
     try {
@@ -11,7 +12,7 @@ export async function POST(request: NextRequest) {
         // Validate input
         if(!username || !password || !email || !name) {
             return NextResponse.json({ 
-                error: "Missing required fields",
+                error: REGISTRATION_MESSAGE.MISSING_FIELDS,
                 missing: {
                     username: !username,
                     password: !password,
@@ -22,60 +23,38 @@ export async function POST(request: NextRequest) {
         }
 
         // Validate email format
-        const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
-        if (!emailRegex.test(email)) {
+        if (!isValidEmail(email)) {
             return NextResponse.json({ 
-                error: "Invalid email format" 
+                error: EMAIL_MESSAGE.INVALID_FORMAT
             }, { status: 400 });
         }
 
         // Validate password length
         if (password.length < 6) {
             return NextResponse.json({ 
-                error: "Password must be at least 6 characters long" 
+                error: PASSWORD_MESSAGE.MIN_LENGTH
             }, { status: 400 });
         }
 
         // Validate username length
         if (username.length < 3) {
             return NextResponse.json({ 
-                error: "Username must be at least 3 characters long" 
+                error: USERNAME_MESSAGE.MIN_LENGTH
             }, { status: 400 });
         }
         
+        const result = await registerNewUser({ username, password, name, email });
 
-        await connectDB();
-
-        // Check if user already exists
-        const existingUsername = await User.findOne({ username });
-        if (existingUsername) {
+        if(result.error) {
             return NextResponse.json({
-                error: "Username already exists",
-                field: "username"
+                error: result.error,
+                field: result.field
             }, { status: 409 });
         }
 
-        // Check if email already used
-        const existingEmail = await User.findOne({ email });
-        if (existingEmail) {
-            return NextResponse.json({
-                error: "Email already registered",
-                field: "email"
-            }, { status: 409 });
-        }
+        const user = result.user;
 
-        // Hash the password
-        const hashedPassword = await bcrypt.hash(password, 10); // 10 is the salt rounds
-
-        // Create the user
-        const user = await User.create({
-            username,
-            password: hashedPassword,
-            name,
-            email
-        });
-
-        return NextResponse.json({ message: "User registered successfully", 
+        return NextResponse.json({ message: REGISTRATION_MESSAGE.USER_SUCCESS, 
             user: { id: user._id.toString(), username: user.username, email: user.email, name: user.name }
         }, { status: 201 });
     }
@@ -85,10 +64,7 @@ export async function POST(request: NextRequest) {
         // If two people create same user at the same time
         if(error instanceof MongoServerError && error.code === 11000) {
             const field = Object.keys(error.keyPattern)[0];
-            return NextResponse.json({
-                error: `User with this ${field} already exists`,
-                field: field
-            }, { status: 409 });
+            return NextResponse.json({ error: `User with this ${field} already exists`, field: field }, { status: 409 });
         }
 
         // Handle other errors

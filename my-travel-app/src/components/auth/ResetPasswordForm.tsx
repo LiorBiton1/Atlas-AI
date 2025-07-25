@@ -2,6 +2,10 @@ import { Anchor, Button, Paper, PasswordInput, Text, Title } from '@mantine/core
 import { useForm } from '@mantine/form';
 import { useState } from 'react';
 import { useSearchParams } from 'next/navigation';
+import { resetPassword } from '@/utils/auth/authServiceClient';
+import { isValidPassword } from '@/utils/auth/validation';
+import { PASSWORD_MESSAGE } from '@/utils/auth/validationMessages';
+import { RESET_PASSWORD_MESSAGE } from '@/utils/auth/authMessages';
 
 interface ResetPasswordFormProps {
     onFinish: () => void;
@@ -22,43 +26,35 @@ export function ResetPasswordForm({ onFinish, onNotify }: Readonly<ResetPassword
             confirmPassword: "",
         },
         validate: {
-            password: value => (value.length >= 6 ? null : "Password must be at least 6 characters long"),
-            confirmPassword: (value, values) => (value === values.password ? null : "Passwords do not match"),
+            password: value => (isValidPassword(value) ? null : PASSWORD_MESSAGE.MIN_LENGTH),
+            confirmPassword: (value, values) => (value === values.password ? null : PASSWORD_MESSAGE.DO_NOT_MATCH),
         },
     });
 
     // Reset Password Handler
     const handleResetPassword = async (values: typeof resetForm.values) => {
-        const token = resetToken || searchParams.get("reset_token");
-
-        if (!token) {
-            onNotify?.("error", "Invalid reset token.");
+        if (!resetToken) {
+            onNotify?.("error", RESET_PASSWORD_MESSAGE.INVALID_TOKEN);
             return;
         }
 
         setLoading(true);
 
         try {
-            const response = await fetch("/api/auth/reset_password", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ token, password: values.password }),
-            });
+            const { ok, data } = await resetPassword(resetToken, values.password); 
 
-            const data = await response.json();
-
-            if (response.ok) {
-                onNotify?.("success", "Password reset successfully! Redirecting to login...");
+            if (ok) {
+                onNotify?.("success", RESET_PASSWORD_MESSAGE.SUCCESS);
                 resetForm.reset();
                 setTimeout(() => {
                     onFinish();
                 }, 1500);
             } else {
-                onNotify?.("error", data.error || "Failed to reset password");
+                onNotify?.("error", data.error || RESET_PASSWORD_MESSAGE.FAILURE);
             }
         } catch (error) {
             console.error("Reset password error:", error);
-            onNotify?.("error", "Failed to reset password. Please try again later.");
+            onNotify?.("error", RESET_PASSWORD_MESSAGE.FAILURE_LATER);
         } finally {
             setLoading(false);
         }
@@ -77,6 +73,7 @@ export function ResetPasswordForm({ onFinish, onNotify }: Readonly<ResetPassword
                     placeholder="Enter new password"
                     size="md"
                     radius="md"
+                    disabled={loading}
                     {...resetForm.getInputProps('password')}
                     visibilityToggleButtonProps={{ "aria-label": "toggle password visibility" }}
                 />
@@ -88,6 +85,7 @@ export function ResetPasswordForm({ onFinish, onNotify }: Readonly<ResetPassword
                     mt="md"
                     size="md"
                     radius="md"
+                    disabled={loading}
                     {...resetForm.getInputProps('confirmPassword')}
                     visibilityToggleButtonProps={{ "aria-label": "toggle password visibility" }}
                 />
@@ -98,7 +96,7 @@ export function ResetPasswordForm({ onFinish, onNotify }: Readonly<ResetPassword
                 </Button>
 
                 <Text ta="center" mt="md">
-                    <Anchor fw={500} onClick={onFinish}>
+                    <Anchor fw={500} onClick={loading ? undefined : onFinish} style={{ pointerEvents: loading ? "none" : "auto", opacity: loading ? 0.5 : 1, cursor: loading ? "not-allowed" : "pointer" }}>
                         Back to login
                     </Anchor>
                 </Text>

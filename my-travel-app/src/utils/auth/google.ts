@@ -11,4 +11,11 @@ export function mapGoogleError(code: string) {
     default:
       return 'Google sign‑in failed. Please try again or use email registration.';
   }
-}
+};
+
+export const GOOGLE_MESSAGE = {
+  SIGN_IN_SUCCESS: "Google sign-in successful!",
+  SIGN_UP_SUCCESS: "Google sign-up successful!",
+  SIGN_IN_FAILURE: "Unable to connect to Google. Please check your connection and try again.",
+  SIGN_UP_FAILURE: "Google sign-up failed. Please try again.",
+};

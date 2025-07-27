@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { resetUserPassword } from "@/utils/auth/server";
-import { PASSWORD_MESSAGE, RESET_PASSWORD_MESSAGE } from "@/utils/auth/messages";
+import { resetUserPassword } from "@/utils/auth/server/passwordService";
+import { PASSWORD_MESSAGE, RESET_PASSWORD_MESSAGE } from "@/utils/auth";
 
 export async function POST(request: NextRequest) {
     try {

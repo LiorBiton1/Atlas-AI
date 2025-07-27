@@ -1,1 +1,1 @@
-export * from "./authServiceClient";
+export { resetPassword, registerUser, forgotPassword } from "./authServiceClient";

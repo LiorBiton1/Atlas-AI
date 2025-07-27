@@ -1,8 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { MongoServerError } from "mongodb";
-import { isValidEmail } from "@/utils/auth/validation";
-import { registerNewUser } from "@/utils/auth/server";
-import { EMAIL_MESSAGE, PASSWORD_MESSAGE, REGISTRATION_MESSAGE, USERNAME_MESSAGE } from "@/utils/auth/messages";
+import { isValidEmail, EMAIL_MESSAGE, PASSWORD_MESSAGE, REGISTRATION_MESSAGE, USERNAME_MESSAGE } from "@/utils/auth";
+import { registerNewUser } from "@/utils/auth/server/userService";
 
 export async function POST(request: NextRequest) {
     try {

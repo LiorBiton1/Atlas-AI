@@ -1,7 +1,7 @@
 import User from "@/models/User";
 import { connectDB } from "@/lib/mongodb";
 import bcrypt from "bcryptjs";
-import { EMAIL_MESSAGE, USERNAME_MESSAGE } from "../messages/validationMessages";
+import { EMAIL_MESSAGE, USERNAME_MESSAGE } from "../messages";
 
 /**
  * Finds a user by email or username.

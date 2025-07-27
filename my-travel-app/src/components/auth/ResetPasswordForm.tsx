@@ -2,9 +2,7 @@ import { Anchor, Button, Paper, PasswordInput, Text, Title } from '@mantine/core
 import { useForm } from '@mantine/form';
 import { useState } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { resetPassword } from '@/utils/auth/client';
-import { isValidPassword } from '@/utils/auth/validation';
-import { PASSWORD_MESSAGE, RESET_PASSWORD_MESSAGE } from '@/utils/auth/messages';
+import { resetPassword, isValidPassword, PASSWORD_MESSAGE, RESET_PASSWORD_MESSAGE } from '@/utils/auth';
 
 interface ResetPasswordFormProps {
     onFinish: () => void;

@@ -5,11 +5,9 @@ import { LoginForm } from './LoginForm';
 import { RegisterForm } from './RegisterForm';
 import { ForgotPasswordForm } from './ForgotPasswordForm';
 import { ResetPasswordForm } from './ResetPasswordForm';
-import { mapGoogleError } from '../../utils/auth/google';
+import { mapGoogleError } from '../../utils/auth';
 import { IconAlertCircle, IconCheck } from '@tabler/icons-react';
-import { useNotifications } from '../../hooks/auth/useNotifications';
-import { useAuthMode } from '../../hooks/auth/useAuthMode';
-import { useUrlValidation } from '../../hooks/auth/useUrlValidation';
+import { useNotifications, useAuthMode, useUrlValidation } from '../../hooks/auth';
 
 import classes from './Authentication.module.css';
 

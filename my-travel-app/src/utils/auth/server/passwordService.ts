@@ -3,8 +3,8 @@ import User from '@/models/User';
 import bcrypt from 'bcryptjs';
 import crypto from 'crypto';
 import { sendPasswordResetEmail } from '@/utils/auth/server/emailService';
-import { findUserByEmailOrUsername, findUserByEmail } from '@/utils/auth/server';
-import { FORGOT_PASSWORD_MESSAGE, RESET_PASSWORD_MESSAGE } from "../messages/authMessages";
+import { findUserByEmailOrUsername, findUserByEmail } from './userService';
+import { FORGOT_PASSWORD_MESSAGE, RESET_PASSWORD_MESSAGE } from "../messages";
 
 /**
  * Verifies a user's credentials by checking email/username and password.

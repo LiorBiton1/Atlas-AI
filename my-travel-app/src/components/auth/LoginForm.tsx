@@ -2,11 +2,9 @@ import { Anchor, Button, Checkbox, Group, PasswordInput, Text, TextInput, Title 
 import { useForm } from "@mantine/form";
 import { GoogleButton } from "./GoogleButton";
 import { signIn } from "next-auth/react";
-import { GOOGLE_MESSAGE, mapGoogleError } from "../../utils/auth/google";
+import { isValidEmail, isValidUsername, isValidPassword, GOOGLE_MESSAGE, mapGoogleError, LOGIN_MESSAGE } from "@/utils/auth";
 import { useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import { isValidEmail, isValidUsername, isValidPassword } from "@/utils/auth/validation";
-import { LOGIN_MESSAGE } from "@/utils/auth/messages";
 
 interface LoginFormProps {
     onSuccess?: () => void;

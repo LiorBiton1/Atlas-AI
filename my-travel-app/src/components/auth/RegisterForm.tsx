@@ -2,12 +2,10 @@ import { Anchor, Button, Group, PasswordInput, Text, TextInput, Title } from "@m
 import { useForm } from "@mantine/form";
 import { GoogleButton } from "./GoogleButton";
 import { signIn } from "next-auth/react";
-import { GOOGLE_MESSAGE, mapGoogleError } from "../../utils/auth/google";
+import { isValidEmail, isValidUsername, isValidPassword, isValidName, registerUser, GOOGLE_MESSAGE, mapGoogleError, EMAIL_MESSAGE, NAME_MESSAGE, USERNAME_MESSAGE, PASSWORD_MESSAGE, REGISTRATION_MESSAGE } from "@/utils/auth";
 import { useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import { isValidEmail, isValidUsername, isValidPassword, isValidName } from "@/utils/auth/validation";
-import { registerUser } from "@/utils/auth/client";
-import { EMAIL_MESSAGE, NAME_MESSAGE, USERNAME_MESSAGE, PASSWORD_MESSAGE, REGISTRATION_MESSAGE } from "@/utils/auth/messages";
+
 
 interface RegisterFormProps {
     onSuccess?: () => void;

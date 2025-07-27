@@ -1,8 +1,11 @@
 "use client";
+import { Suspense } from "react";
 import { Authentication } from "@/components/auth/Authentication";
 
-export default function LoginPage() {
+export default function AuthPage() {
   return (
-    <Authentication />
+    <Suspense fallback={<div>Loading...</div>}>
+      <Authentication />
+    </Suspense>
   );
 }

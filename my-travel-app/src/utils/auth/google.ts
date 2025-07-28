@@ -1,6 +1,6 @@
 export function mapGoogleError(code: string) {
   switch (code) {
-    case 'OAuthCallback':
+    case 'Callback':
       return 'Google sign‑in was cancelled or failed. Please try again.';
     case 'OAuthAccountNotLinked':
       return 'This email is already registered with a different sign‑in method.';

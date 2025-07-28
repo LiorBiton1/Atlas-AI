@@ -57,7 +57,7 @@ export function LoginForm({ onSuccess, onRegister, onForgotPassword, onNotify }:
                 onNotify?.("success", LOGIN_MESSAGE.SUCCESS);
                 setTimeout(() => {
                     onSuccess?.();
-                    router.push("/"); // redirect after 1.5 seconds
+                    router.push("/home"); // redirect after 1.5 seconds
                 }, 1000);
             }
         }
@@ -77,7 +77,7 @@ export function LoginForm({ onSuccess, onRegister, onForgotPassword, onNotify }:
 
             const result = await signIn("google", {
                 redirect: false,
-                callbackUrl: "/" // Change this to wherever I want to go to after I login via google
+                callbackUrl: "/home" // Change this to wherever I want to go to after I login via google
             });
 
             if (result?.error) {
@@ -87,7 +87,7 @@ export function LoginForm({ onSuccess, onRegister, onForgotPassword, onNotify }:
             else if (result?.ok) {
                 // Successful sign-in
                 console.log(GOOGLE_MESSAGE.SIGN_IN_SUCCESS);
-                router.push("/"); // redirect to home page or desired page
+                router.push("/home"); // redirect to home page or desired page
             }
         }
         catch (error) {

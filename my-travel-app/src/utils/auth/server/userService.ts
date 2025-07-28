@@ -1,7 +1,7 @@
 import User from "@/models/User";
 import { connectDB } from "@/lib/mongodb";
 import bcrypt from "bcryptjs";
-import { EMAIL_MESSAGE, USERNAME_MESSAGE } from "../messages";
+import { EMAIL_MESSAGE, USERNAME_MESSAGE } from "@/utils/auth/messages";
 
 /**
  * Finds a user by email or username.
@@ -86,6 +86,11 @@ export async function createGoogleUser({ email, name, googleId }: { email: strin
     const existingUser = await findUserByEmail(email);
 
     if(existingUser) {
+        // If the user exists but doesn't have a googleId, they registered via form
+        if(!existingUser.googleId) {
+            throw new Error("OAuthAccountNotLinked");
+        }
+        // If they have a googleId, then sign them in
         return existingUser;
     }
     

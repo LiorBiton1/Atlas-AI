@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Alert, Paper } from '@mantine/core';
 import { useRouter, usePathname, useSearchParams } from 'next/navigation';
 import { LoginForm } from './LoginForm';
@@ -28,6 +28,9 @@ export function Authentication() {
     const { notification, handleNotification, clearNotification } = useNotifications();
     const { mode, handleModeBasedOnValidation, handleInvalidParams } = useAuthMode();
     const { setUrlMode, createUrlParams, validateModeAndToken } = useUrlValidation();
+
+    // State to keep track of the previous mode for clearing notifications
+    const [prevMode, setPrevMode] = useState(mode);
 
     // Set the initial mode based on URL parameters
     useEffect(() => {
@@ -70,8 +73,12 @@ export function Authentication() {
 
     // If a mode changes clear the notification
     useEffect(() => {
-        clearNotification();
-    }, [mode, clearNotification]);
+        // If the current mode is different from the initial mode, clear the notification
+        if(prevMode !== mode) {
+            clearNotification();
+            setPrevMode(mode);
+        }
+    }, [mode, prevMode, clearNotification]);
 
     // Handlers for navigation between forms
     const navigationHandlers = {

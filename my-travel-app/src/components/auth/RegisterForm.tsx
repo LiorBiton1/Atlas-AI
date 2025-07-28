@@ -82,7 +82,7 @@ export function RegisterForm({ onSuccess, onLogin, onNotify }: Readonly<Register
         try {
             const result = await signIn("google", {
                 redirect: false,
-                callbackUrl: "/" // Change this to wherever I want to go to after I login via google
+                callbackUrl: "/home" // Change this to wherever I want to go to after I login via google
             });
 
             if (result?.error) {
@@ -92,7 +92,7 @@ export function RegisterForm({ onSuccess, onLogin, onNotify }: Readonly<Register
             else if (result?.ok) {
                 // Successful sign-up
                 console.log(GOOGLE_MESSAGE.SIGN_UP_SUCCESS);
-                router.push("/"); // redirect to home page or desired page
+                router.push("/home"); // redirect to home page or desired page
             }
         }
         catch (error) {

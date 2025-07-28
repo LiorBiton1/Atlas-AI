@@ -37,7 +37,7 @@ const handler = NextAuth({
     ],
     pages: {
         signIn: "/auth?mode=login", // Redirect sign-in errors to auth page
-        error: "/auth", // Redirect all errors to auth page
+        error: "/auth?mode=login", // Redirect all errors to auth page
     },
     callbacks: {
         async signIn({ user, account }) {
@@ -54,6 +54,11 @@ const handler = NextAuth({
                 }
                 catch(error) {
                     console.error('Google sign-in error:', error);
+
+                    // If error code is OAuthAccountNotLinked, return the proper error
+                    if(error instanceof Error && error.message === "OAuthAccountNotLinked") {
+                        return `/auth?mode=login&error=OAuthAccountNotLinked`;
+                    }
                     return false;
                 }
             }

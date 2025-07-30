@@ -2,7 +2,7 @@ import { Anchor, Button, Checkbox, Group, PasswordInput, Text, TextInput, Title 
 import { useForm } from "@mantine/form";
 import { GoogleButton } from "./GoogleButton";
 import { signIn } from "next-auth/react";
-import { isValidEmail, isValidUsername, isValidPassword, GOOGLE_MESSAGE, mapGoogleError, LOGIN_MESSAGE } from "@/utils/auth";
+import { isValidEmail, isValidUsername, isValidPassword, GOOGLE_MESSAGE, mapGoogleError, LOGIN_MESSAGE, PASSWORD_MESSAGE, USERNAME_MESSAGE } from "@/utils/auth";
 import { useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 
@@ -29,8 +29,28 @@ export function LoginForm({ onSuccess, onRegister, onForgotPassword, onNotify }:
             rememberMe: false
         },
         validate: {
-            usernameOrEmail: value => ((isValidEmail(value) || isValidUsername(value)) ? null : LOGIN_MESSAGE.USERNAME_OR_EMAIL_REQUIRED),
-            password: value => (isValidPassword(value) ? null : LOGIN_MESSAGE.INVALID_CREDENTIALS),
+            usernameOrEmail: value => {
+                if(!value || value.trim() === "") {
+                    return LOGIN_MESSAGE.USERNAME_OR_EMAIL_REQUIRED;
+                }
+
+                if(isValidEmail(value)) {
+                    return null; // Valid email
+                }
+                else {
+                    // Not a valid email, check username and its length
+                    return isValidUsername(value) ? null : USERNAME_MESSAGE.MIN_LENGTH;
+                }
+            },
+            password: value => {
+                if(!value || value.trim() === "") {
+                    return PASSWORD_MESSAGE.REQUIRED;
+                }
+                if(!isValidPassword(value)) {
+                    return PASSWORD_MESSAGE.MIN_LENGTH;
+                }
+                return null; // No error
+            },
         },
     });
 

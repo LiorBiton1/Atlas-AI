@@ -21,7 +21,7 @@ jest.mock("next/navigation", () => ({
 const mockPush = jest.fn();
 (useRouter as jest.Mock).mockReturnValue({ push: mockPush });
 
-const pendingPromise = () => new Promise(() => { });
+const pendingPromise = () => new Promise(() => {});
 
 const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
@@ -44,8 +44,8 @@ describe("LoginForm", () => {
             renderLoginForm();
         });
 
-        it("Renders Welcome back", () => {
-            expect(screen.getByRole("heading", { name: /Welcome back/i })).toBeInTheDocument();
+        it("Renders Welcome Back", () => {
+            expect(screen.getByRole("heading", { name: /Welcome Back/i })).toBeInTheDocument();
         });
         it("Renders Sign in with Google button", () => {
             expect(screen.getByRole("button", { name: /Sign in with Google/i })).toBeInTheDocument();

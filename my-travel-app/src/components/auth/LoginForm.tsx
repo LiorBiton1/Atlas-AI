@@ -122,7 +122,7 @@ export function LoginForm({ onSuccess, onRegister, onForgotPassword, onNotify }:
     return (
         <>
             {/* Title */}
-            <Title order={2} mb="md">Welcome back!</Title>
+            <Title order={2} mb="md">Welcome Back!</Title>
 
             {/* Google Sign-In Button */}
             <Group grow mb="md" mt="md">

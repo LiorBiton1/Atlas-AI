@@ -21,7 +21,7 @@ jest.mock("next/navigation", () => ({
 const mockPush = jest.fn();
 (useRouter as jest.Mock).mockReturnValue({ push: mockPush });
 
-const pendingPromise = () => new Promise(() => {});
+const pendingPromise = () => new Promise(() => { });
 
 const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
@@ -181,7 +181,7 @@ describe("LoginForm", () => {
         });
 
         it("Shows correct error for access denied", async () => {
-            // Mock Google access denail
+            // Mock Google access denial
             mockSignIn.mockResolvedValueOnce({ error: "AccessDenied" });
             const googleButton = screen.getByRole("button", { name: /Sign in with Google/i });
 
@@ -371,6 +371,72 @@ describe("LoginForm", () => {
                 // Verify the catch block error handling
                 expect(mockNotify).toHaveBeenCalledWith("error", LOGIN_MESSAGE.FAILURE);
             });
+
+            it("Clears validation errors when user corrects invalid input", async () => {
+                const usernameField = screen.getByLabelText(/Username or Email/i);
+                const passwordField = screen.getByLabelText(/^Password$/i);
+                const loginButton = screen.getByRole("button", { name: /^Login$/i });
+
+                // First submit with invalid input
+                await userEvent.click(loginButton);
+
+                // Check for validation errors
+                expect(await screen.findByText(/Username or email is required/i)).toBeInTheDocument();
+                expect(await screen.findByText(/Password is required/i)).toBeInTheDocument();
+
+                // Now fill in valid input
+                await userEvent.type(usernameField, "validUser");
+                await userEvent.type(passwordField, "validPassword123");
+
+                // Now when typing error should be cleared
+                expect(screen.queryByText(/Username or email is required/i)).not.toBeInTheDocument();
+                expect(screen.queryByText(/Password is required/i)).not.toBeInTheDocument();
+            });
+        });
+
+        describe("Password Field Functionality", () => {
+            it("Toggles password visibility when toggle button is clicked", async () => {
+                // Get the password input field
+                const passwordField = screen.getByLabelText(/^Password$/i);
+
+                // Get the visibility toggle button - it has a specific aria-label
+                const toggleButton = screen.getByLabelText(/toggle password visibility/i);
+
+                // Initially, password should be hidden (type="password")
+                expect(passwordField).toHaveAttribute("type", "password");
+
+                // Click the toggle button to show password
+                await userEvent.click(toggleButton);
+
+                // Now password should be visible (type="text")
+                expect(passwordField).toHaveAttribute("type", "text");
+
+                // Click again to hide password
+                await userEvent.click(toggleButton);
+
+                // Password should be hidden again (type="password")
+                expect(passwordField).toHaveAttribute("type", "password");
+            });
+
+            it("Mantains password value when visibility is toggled", async () => {
+                const passwordField = screen.getByLabelText(/^Password$/i);
+                const toggleButton = screen.getByLabelText(/toggle password visibility/i);
+
+                // Type a password
+                await userEvent.type(passwordField, "testPassword123");
+
+                // Toggle visibility to show password
+                await userEvent.click(toggleButton);
+
+                // Pasword value should be preserved
+                expect(passwordField).toHaveValue("testPassword123");
+
+                // Toggle visibility to hide password
+                await userEvent.click(toggleButton);
+
+                // Password value should still be preserved
+                expect(passwordField).toHaveValue("testPassword123");
+            });
         });
 
         describe("Form Submission Behavior", () => {
@@ -391,7 +457,6 @@ describe("LoginForm", () => {
 
                 // Check for loading state
                 const buttonLabel = loginButton.querySelector(".mantine-Button-label");
-                expect(buttonLabel).toHaveAttribute("data-loading", "true");
                 expect(buttonLabel).toHaveAttribute("data-loading", "true");
                 expect(loginButton).toBeDisabled();
             });
@@ -453,7 +518,7 @@ describe("LoginForm", () => {
         beforeEach(() => {
             mockNotify = jest.fn();
             mockSignIn.mockClear();
-            mockPush.mockClear();        
+            mockPush.mockClear();
         });
 
         it("Calls onSuccess callback on successful login", async () => {
@@ -519,5 +584,87 @@ describe("LoginForm", () => {
             // Verify onForgotPassword callback was called
             expect(mockOnForgotPassword).toHaveBeenCalled();
         });
+    });
+
+    describe("Props Edge Cases", () => {
+        const mockSignIn = signIn as jest.Mock;
+
+        beforeEach(() => {
+            mockSignIn.mockClear();
+            mockPush.mockClear();
+        });
+
+        it("Handles missing onNotify callback without crashing", async () => {
+            // Render form without onNotify
+            renderLoginForm({ onNotify: undefined });
+
+            // Mock successful Google sign-in
+            mockSignIn.mockResolvedValueOnce({ ok: true });
+
+            const googleButton = screen.getByRole("button", { name: /Sign in with Google/i });
+
+            // User clicks the Google Sign-In button (Should not throw error)
+            await userEvent.click(googleButton);
+
+            // Verify that signIn was called
+            expect(mockSignIn).toHaveBeenCalledWith("google", {
+                redirect: false,
+                callbackUrl: "/home"
+            });
+
+            // Verify navigation to home page
+            expect(mockPush).toHaveBeenCalledWith("/home");
+        });
+
+        it("Handles missing onSuccess callback without crashing", async () => {
+            // Render form without onSuccess
+            renderLoginForm({ onSuccess: undefined });
+
+            // Mock successful signIn
+            mockSignIn.mockResolvedValueOnce({ ok: true });
+
+            const usernameField = screen.getByLabelText(/Username or Email/i);
+            const passwordField = screen.getByLabelText(/^Password$/i);
+            const loginButton = screen.getByRole("button", { name: /^Login$/i });
+
+            // Fill form with valid credentials
+            await userEvent.type(usernameField, "validUser");
+            await userEvent.type(passwordField, "validPassword123");
+
+            // Click the Login button
+            await userEvent.click(loginButton);
+
+            // Wait for the timeout and verify navigation
+            await delay(1100);
+            expect(mockPush).toHaveBeenCalledWith("/home");
+        });
+
+        it("Handles missing onRegister callback without crashing", async () => {
+            // Render form without onRegister
+            renderLoginForm({ onRegister: undefined });
+
+            const registerLink = screen.getByText(/Register/i);
+
+            // User clicks the Register link (Should not throw error)
+            await userEvent.click(registerLink);
+
+            // Expect no crash
+        });
+
+        it("Handles missing onForgotPassword callback without crashing", async () => {
+            // Render form without onForgotPassword
+            renderLoginForm({ onForgotPassword: undefined });
+
+            const forgotPasswordLink = screen.getByText(/Forgot password\?/i);
+
+            // Link should be present and clickable
+            expect(forgotPasswordLink).toBeInTheDocument();
+
+            // User clicks the Forgot Password link (Should not throw error)
+            await userEvent.click(forgotPasswordLink);
+
+            // Expect no crash
+        });
+
     });
 });
